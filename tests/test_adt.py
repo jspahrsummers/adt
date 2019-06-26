@@ -39,3 +39,13 @@ class TestADT(unittest.TestCase):
         self.assertEqual(e.right, "foobar")
         self.assertEqual(
             e.match(left=lambda n: n + 1, right=lambda s: s + "z"), "foobarz")
+
+    def test_list(self) -> None:
+        xs = ListADT.CONS(("a", ListADT.CONS(("b", ListADT.NIL(None)))))
+
+        (x, xs) = xs.cons
+        self.assertEqual(x, "a")
+
+        (x, xs) = xs.cons
+        self.assertEqual(x, "b")
+        self.assertEqual(xs, ListADT.NIL(None))

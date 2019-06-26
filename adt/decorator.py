@@ -26,6 +26,14 @@ def adt(cls):
 
     cls.__str__ = _str
 
+    def _eq(self, other, cls=cls):
+        if not isinstance(other, cls):
+            return False
+
+        return self._key == other._key and self._value == other._value
+
+    cls.__eq__ = _eq
+
     for caseName, key in cls._Key.__members__.items():
 
         def constructor(cls, value, _key=key):

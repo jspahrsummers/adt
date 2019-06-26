@@ -51,7 +51,7 @@ def adt(cls):
 
     def match(self, **kwargs):
         cases = set(type(self)._Key.__members__.keys())
-        predicates = set(kwargs.keys())
+        predicates = {k.upper() for k in kwargs.keys()}
 
         assert cases == predicates, f'Pattern match on {self} ({predicates}) is over- or under-specified vs. {cases}'
 
@@ -61,5 +61,7 @@ def adt(cls):
 
         raise ValueError(
             f'{self} failed pattern match against all of: {predicates}')
+
+    cls.match = match
 
     return cls

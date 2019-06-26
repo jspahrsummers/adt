@@ -55,7 +55,7 @@ def adt(cls):
 
         assert cases == predicates, f'Pattern match on {self} ({predicates}) is over- or under-specified vs. {cases}'
 
-        for key, callback in kwargs:
+        for key, callback in kwargs.items():
             if self._key == type(self)._Key[key.upper()]:
                 return callback(self._value)
 

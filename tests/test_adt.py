@@ -26,7 +26,7 @@ class TestADT(unittest.TestCase):
     def test_either(self) -> None:
         e = EitherADT.LEFT(5)
         self.assertEqual(e, EitherADT.LEFT(5))
-        self.assertNotEqual(e, EitherADT.Right("foobar"))
+        self.assertNotEqual(e, EitherADT.RIGHT("foobar"))
         self.assertEqual(e.left, 5)
         self.assertIsNone(e.right)
         self.assertEqual(

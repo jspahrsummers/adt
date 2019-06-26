@@ -3,7 +3,9 @@
 set -o errexit
 set -o pipefail
 
+PROJECT_NAME=$(basename "$PWD")
+
 # shellcheck disable=SC1091
 . venv/bin/activate
 
-yapf -r "$@" -- *.py tests/
+yapf -r "$@" -- "$PROJECT_NAME" tests/

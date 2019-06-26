@@ -1,2 +1,0 @@
-def adt() -> None:
-    pass

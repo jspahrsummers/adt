@@ -74,6 +74,10 @@ class TestADT(unittest.TestCase):
                                                   ) -> None:
         with self.assertRaises((AssertionError, RuntimeError)):
             e.match()
+        with self.assertRaises((AssertionError, RuntimeError)):
+            e.match(left=lambda x: True)
+        with self.assertRaises((AssertionError, RuntimeError)):
+            e.match(right=lambda x: True)
 
     @given(from_type(EitherADT))
     def test_eitherAccessorsAndMatchConsistent(self,
@@ -100,3 +104,27 @@ class TestADT(unittest.TestCase):
     @given(from_type(ListADT))
     def test_listEqualsItself(self, xs: ListADT[_T]) -> None:
         self.assertEqual(xs, xs)
+
+    @given(from_type(ListADT))
+    def test_listExhaustivePatternMatchSucceeds(self, xs: ListADT[_T]) -> None:
+        self.assertTrue(xs.match(nil=lambda x: True, cons=lambda x: True))
+
+    @given(from_type(ListADT))
+    def test_listInexhaustivePatternMatchThrows(self, xs: ListADT[_T]) -> None:
+        with self.assertRaises((AssertionError, RuntimeError)):
+            xs.match()
+        with self.assertRaises((AssertionError, RuntimeError)):
+            xs.match(nil=lambda x: True)
+        with self.assertRaises((AssertionError, RuntimeError)):
+            xs.match(cons=lambda x: True)
+
+    @given(from_type(ListADT))
+    def test_listAccessorsAndMatchConsistent(self, xs: ListADT[_T]) -> None:
+        if xs.match(nil=lambda x: False, cons=lambda x: True):
+            self.assertIsNone(xs.nil)
+            self.assertIsNotNone(xs.cons)
+            self.assertEqual(xs.cons, xs.match(nil=None, cons=lambda x: x))
+        else:
+            #self.assertIsNotNone(xs.nil)
+            self.assertIsNone(xs.cons)
+            self.assertEqual(xs.nil, xs.match(nil=lambda x: x, cons=None))

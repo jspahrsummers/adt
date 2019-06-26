@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+
+echo " => Creating Python virtual environment"
+python3 -m venv venv
+
+# shellcheck disable=SC1091
+. venv/bin/activate
+
+echo " => Uninstalling development dependencies"
+pip uninstall -q -r requirements.txt --yes
+
+echo
+echo " => Installing project"
+
+pip install -q -U .

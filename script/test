@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+
+PROJECT_NAME=$(basename "$PWD")
+
+# shellcheck disable=SC1091
+. venv/bin/activate
+
+export HYPOTHESIS_PROFILE="${HYPOTHESIS_PROFILE:-ci}"
+
+if [ "$CIRCLECI" ]
+then
+    # shellcheck disable=SC2046
+    coverage run --source "$PROJECT_NAME/" -m unittest -v -- $(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
+else
+    coverage run --source "$PROJECT_NAME/" -m unittest -v -- tests/test_*.py
+fi
+
+coveralls

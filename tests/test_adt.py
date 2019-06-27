@@ -129,12 +129,11 @@ class TestADT(unittest.TestCase):
     @given(from_type(ListADT))
     def test_listAccessorsAndMatchConsistent(self, xs: ListADT[_T]) -> None:
         if xs.match(nil=lambda x: False, cons=lambda x: True):
-            self.assertIsNone(xs.nil())
             self.assertIsNotNone(xs.cons())
             self.assertEqual(
                 xs.cons(), xs.match(nil=invalidPatternMatch, cons=lambda x: x))
         else:
-            #self.assertIsNotNone(xs.nil())
             self.assertIsNone(xs.cons())
-            self.assertEqual(
-                xs.nil(), xs.match(nil=lambda x: x, cons=invalidPatternMatch))
+
+            with self.assertRaises(AssertionError):
+                xs.match(nil=lambda x: x, cons=invalidPatternMatch)

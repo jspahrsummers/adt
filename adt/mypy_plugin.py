@@ -2,9 +2,9 @@ from decimal import Decimal
 from typing import Any, Callable, Dict, List, Optional, Type
 
 import mypy.types
-from mypy.nodes import (ARG_POS, MDEF, Argument, AssignmentStmt, Block,
-                        ClassDef, Decorator, FuncDef, NameExpr, PassStmt,
-                        SymbolTableNode, TypeVarExpr, Var)
+from mypy.nodes import (ARG_NAMED, ARG_POS, MDEF, Argument, AssignmentStmt,
+                        Block, ClassDef, Decorator, FuncDef, NameExpr,
+                        PassStmt, SymbolTableNode, TypeVarExpr, Var)
 from mypy.plugin import ClassDefContext, Plugin
 from mypy.plugins.common import add_method
 from mypy.semanal import set_callable_name
@@ -64,9 +64,6 @@ class ADTPlugin(Plugin):
             arg_names.append(arg.variable.name())
             arg_kinds.append(arg.kind)
 
-        print(f'Arg types: {arg_types}')
-        print(f'Arg names: {arg_names}')
-
         signature = mypy.types.CallableType(arg_types, arg_kinds, arg_names,
                                             return_type, function_type)
         if tvar_def:
@@ -111,15 +108,15 @@ class ADTPlugin(Plugin):
         assert isinstance(instanceType, mypy.types.Instance)
 
         cases = [
-            typeInfo[lval.name].node for statement in cls.defs.body
-            if isinstance(statement, AssignmentStmt)
-            for lval in statement.lvalues if isinstance(lval, NameExpr)
+            node for node in (typeInfo[lval.name].node
+                              for statement in cls.defs.body
+                              if isinstance(statement, AssignmentStmt)
+                              for lval in statement.lvalues
+                              if isinstance(lval, NameExpr))
+            if isinstance(node, Var)
         ]
 
         for case in cases:
-            if not isinstance(case, Var):
-                continue
-
             print(f'Identified ADT case {case}')
 
             assert case.type
@@ -141,6 +138,42 @@ class ADTPlugin(Plugin):
                              name=case.name().lower(),
                              args=[],
                              return_type=case.type)
+
+        # Add a TypeVar to the class definition for use in `match`
+        tVarName = '_MatchResult'
+        tVarQualifiedName = f'{typeInfo.fullname()}.{tVarName}'
+        objectType = context.api.named_type('__builtins__.object')
+
+        matchTVarExpr = TypeVarExpr(tVarName, tVarQualifiedName, [],
+                                    objectType)
+        typeInfo.names[tVarName] = SymbolTableNode(MDEF, matchTVarExpr)
+
+        matchTVarDef = mypy.types.TypeVarDef(tVarName, tVarQualifiedName, -1,
+                                             [], objectType)
+        matchTVarType = mypy.types.TypeVarType(matchTVarDef)
+
+        caseCallables = {
+            case: mypy.types.CallableType(
+                [
+                    case.type
+                    or mypy.types.AnyType(mypy.types.TypeOfAny.unannotated)
+                ], [ARG_POS], [None], matchTVarType,
+                context.api.named_type('__builtins__.function'))
+            for case in cases
+        }
+
+        # `match` method for pattern matching (uses lowercase case names)
+        matchArgs = [
+            Argument(variable=Var(case.name().lower(), callableType),
+                     type_annotation=callableType,
+                     initializer=None,
+                     kind=ARG_NAMED)
+            for case, callableType in caseCallables.items()
+        ]
+        self._add_method(context,
+                         name='match',
+                         args=matchArgs,
+                         return_type=matchTVarType)
 
     def get_class_decorator_hook(
             self,

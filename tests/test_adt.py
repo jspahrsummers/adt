@@ -50,7 +50,7 @@ class TestADT(unittest.TestCase):
         self.assertEqual(e.left(), 5)
         self.assertIsNone(e.right())
         self.assertEqual(
-            e.match(left=lambda n: n + 1, right=lambda s: s + "z"), 6)
+            e.match(left=lambda n: str(n + 1), right=lambda s: s + "z"), "6")
 
         e = EitherADT.RIGHT("foobar")
         self.assertNotEqual(e, EitherADT.LEFT(5))
@@ -58,7 +58,8 @@ class TestADT(unittest.TestCase):
         self.assertIsNone(e.left())
         self.assertEqual(e.right(), "foobar")
         self.assertEqual(
-            e.match(left=lambda n: n + 1, right=lambda s: s + "z"), "foobarz")
+            e.match(left=lambda n: str(n + 1), right=lambda s: s + "z"),
+            "foobarz")
 
     @given(from_type(EitherADT))
     def test_eitherEqualsItself(self, e: EitherADT[_L, _R]) -> None:

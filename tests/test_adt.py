@@ -1,5 +1,5 @@
 import unittest
-from typing import Generic, Tuple, TypeVar
+from typing import Any, Generic, NoReturn, Tuple, TypeVar
 
 from hypothesis import given
 from hypothesis.strategies import (builds, deferred, from_type, integers, just,
@@ -42,6 +42,10 @@ register_type_strategy(
                tuples(integers(), deferred(lambda: from_type(ListADT))))))
 
 
+def invalidPatternMatch(x: Any) -> NoReturn:
+    assert False, 'Pattern matching failed'
+
+
 class TestADT(unittest.TestCase):
     def test_either(self) -> None:
         e: EitherADT[int, str] = EitherADT.LEFT(5)
@@ -74,11 +78,11 @@ class TestADT(unittest.TestCase):
     def test_eitherInexhaustivePatternMatchThrows(self, e: EitherADT[_L, _R]
                                                   ) -> None:
         with self.assertRaises((AssertionError, RuntimeError)):
-            e.match()
+            e.match()  # type: ignore
         with self.assertRaises((AssertionError, RuntimeError)):
-            e.match(left=lambda x: True)
+            e.match(left=lambda x: True)  # type: ignore
         with self.assertRaises((AssertionError, RuntimeError)):
-            e.match(right=lambda x: True)
+            e.match(right=lambda x: True)  # type: ignore
 
     @given(from_type(EitherADT))
     def test_eitherAccessorsAndMatchConsistent(self,
@@ -86,11 +90,14 @@ class TestADT(unittest.TestCase):
         if e.match(left=lambda x: False, right=lambda x: True):
             self.assertIsNone(e.left())
             self.assertIsNotNone(e.right())
-            self.assertEqual(e.right(), e.match(left=None, right=lambda x: x))
+            self.assertEqual(
+                e.right(), e.match(left=invalidPatternMatch,
+                                   right=lambda x: x))
         else:
             self.assertIsNotNone(e.left())
             self.assertIsNone(e.right())
-            self.assertEqual(e.left(), e.match(left=lambda x: x, right=None))
+            self.assertEqual(
+                e.left(), e.match(left=lambda x: x, right=invalidPatternMatch))
 
     def test_list(self) -> None:
         xs = ListADT.CONS(("a", ListADT.CONS(("b", ListADT.NIL(None)))))
@@ -113,19 +120,21 @@ class TestADT(unittest.TestCase):
     @given(from_type(ListADT))
     def test_listInexhaustivePatternMatchThrows(self, xs: ListADT[_T]) -> None:
         with self.assertRaises((AssertionError, RuntimeError)):
-            xs.match()
+            xs.match()  # type: ignore
         with self.assertRaises((AssertionError, RuntimeError)):
-            xs.match(nil=lambda x: True)
+            xs.match(nil=lambda x: True)  # type: ignore
         with self.assertRaises((AssertionError, RuntimeError)):
-            xs.match(cons=lambda x: True)
+            xs.match(cons=lambda x: True)  # type: ignore
 
     @given(from_type(ListADT))
     def test_listAccessorsAndMatchConsistent(self, xs: ListADT[_T]) -> None:
         if xs.match(nil=lambda x: False, cons=lambda x: True):
             self.assertIsNone(xs.nil())
             self.assertIsNotNone(xs.cons())
-            self.assertEqual(xs.cons(), xs.match(nil=None, cons=lambda x: x))
+            self.assertEqual(
+                xs.cons(), xs.match(nil=invalidPatternMatch, cons=lambda x: x))
         else:
             #self.assertIsNotNone(xs.nil())
             self.assertIsNone(xs.cons())
-            self.assertEqual(xs.nil(), xs.match(nil=lambda x: x, cons=None))
+            self.assertEqual(
+                xs.nil(), xs.match(nil=lambda x: x, cons=invalidPatternMatch))

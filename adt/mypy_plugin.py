@@ -117,9 +117,7 @@ class ADTPlugin(Plugin):
         ]
 
         for case in cases:
-            print(f'Identified ADT case {case}')
-
-            assert case.type
+            assert case.type, 'Untyped cases are not currently supported in adt.mypy_plugin'
 
             # Constructor method
             self._add_method(context,
@@ -157,7 +155,9 @@ class ADTPlugin(Plugin):
                 [
                     case.type
                     or mypy.types.AnyType(mypy.types.TypeOfAny.unannotated)
-                ], [ARG_POS], [None], matchTVarType,
+                ], [ARG_POS], [None],
+                # FIXME: This should be matchTVarType, but it currently fails to unify with actual examples for some reason.
+                mypy.types.AnyType(mypy.types.TypeOfAny.implementation_artifact),
                 context.api.named_type('__builtins__.function'))
             for case in cases
         }

@@ -44,7 +44,7 @@ register_type_strategy(
 
 class TestADT(unittest.TestCase):
     def test_either(self) -> None:
-        e = EitherADT.LEFT(5)
+        e: EitherADT[int, str] = EitherADT.LEFT(5)
         self.assertEqual(e, EitherADT.LEFT(5))
         self.assertNotEqual(e, EitherADT.RIGHT("foobar"))
         self.assertEqual(e.left(), 5)

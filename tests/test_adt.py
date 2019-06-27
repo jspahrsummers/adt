@@ -18,13 +18,6 @@ class EitherADT(Generic[_L, _R]):
     RIGHT: _R
 
 
-any_types = one_of(integers(), text())
-
-register_type_strategy(
-    EitherADT,
-    one_of(builds(EitherADT.LEFT, any_types), builds(EitherADT.RIGHT,
-                                                     any_types)))
-
 _T = TypeVar('_T')
 
 
@@ -33,6 +26,14 @@ class ListADT(Generic[_T]):
     NIL: None
     CONS: Tuple[_T, "ListADT[_T]"]
 
+
+# Hypothesis generative testing strategies
+any_types = one_of(integers(), text())
+
+register_type_strategy(
+    EitherADT,
+    one_of(builds(EitherADT.LEFT, any_types), builds(EitherADT.RIGHT,
+                                                     any_types)))
 
 register_type_strategy(
     ListADT,

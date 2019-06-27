@@ -47,16 +47,16 @@ class TestADT(unittest.TestCase):
         e = EitherADT.LEFT(5)
         self.assertEqual(e, EitherADT.LEFT(5))
         self.assertNotEqual(e, EitherADT.RIGHT("foobar"))
-        self.assertEqual(e.left, 5)
-        self.assertIsNone(e.right)
+        self.assertEqual(e.left(), 5)
+        self.assertIsNone(e.right())
         self.assertEqual(
             e.match(left=lambda n: n + 1, right=lambda s: s + "z"), 6)
 
         e = EitherADT.RIGHT("foobar")
         self.assertNotEqual(e, EitherADT.LEFT(5))
         self.assertEqual(e, EitherADT.RIGHT("foobar"))
-        self.assertIsNone(e.left)
-        self.assertEqual(e.right, "foobar")
+        self.assertIsNone(e.left())
+        self.assertEqual(e.right(), "foobar")
         self.assertEqual(
             e.match(left=lambda n: n + 1, right=lambda s: s + "z"), "foobarz")
 
@@ -83,21 +83,21 @@ class TestADT(unittest.TestCase):
     def test_eitherAccessorsAndMatchConsistent(self,
                                                e: EitherADT[_L, _R]) -> None:
         if e.match(left=lambda x: False, right=lambda x: True):
-            self.assertIsNone(e.left)
-            self.assertIsNotNone(e.right)
-            self.assertEqual(e.right, e.match(left=None, right=lambda x: x))
+            self.assertIsNone(e.left())
+            self.assertIsNotNone(e.right())
+            self.assertEqual(e.right(), e.match(left=None, right=lambda x: x))
         else:
-            self.assertIsNotNone(e.left)
-            self.assertIsNone(e.right)
-            self.assertEqual(e.left, e.match(left=lambda x: x, right=None))
+            self.assertIsNotNone(e.left())
+            self.assertIsNone(e.right())
+            self.assertEqual(e.left(), e.match(left=lambda x: x, right=None))
 
     def test_list(self) -> None:
         xs = ListADT.CONS(("a", ListADT.CONS(("b", ListADT.NIL(None)))))
 
-        (x, xs) = xs.cons
+        (x, xs) = xs.cons()
         self.assertEqual(x, "a")
 
-        (x, xs) = xs.cons
+        (x, xs) = xs.cons()
         self.assertEqual(x, "b")
         self.assertEqual(xs, ListADT.NIL(None))
 
@@ -121,10 +121,10 @@ class TestADT(unittest.TestCase):
     @given(from_type(ListADT))
     def test_listAccessorsAndMatchConsistent(self, xs: ListADT[_T]) -> None:
         if xs.match(nil=lambda x: False, cons=lambda x: True):
-            self.assertIsNone(xs.nil)
-            self.assertIsNotNone(xs.cons)
-            self.assertEqual(xs.cons, xs.match(nil=None, cons=lambda x: x))
+            self.assertIsNone(xs.nil())
+            self.assertIsNotNone(xs.cons())
+            self.assertEqual(xs.cons(), xs.match(nil=None, cons=lambda x: x))
         else:
-            #self.assertIsNotNone(xs.nil)
-            self.assertIsNone(xs.cons)
-            self.assertEqual(xs.nil, xs.match(nil=lambda x: x, cons=None))
+            #self.assertIsNotNone(xs.nil())
+            self.assertIsNone(xs.cons())
+            self.assertEqual(xs.nil(), xs.match(nil=lambda x: x, cons=None))

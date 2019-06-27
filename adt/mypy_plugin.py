@@ -1,8 +1,11 @@
 from decimal import Decimal
-from mypy.nodes import AssignmentStmt, ClassDef, NameExpr, Var
+from mypy.nodes import ARG_POS, Argument, AssignmentStmt, ClassDef, NameExpr, Var
 from mypy.plugin import Plugin, ClassDefContext
+from mypy.plugins.common import add_method
 
-from typing import Callable, Optional, Type
+from typing import Any, Callable, Dict, Optional, Type
+
+import mypy.types
 
 
 class ADTPlugin(Plugin):
@@ -14,19 +17,27 @@ class ADTPlugin(Plugin):
         cls = context.cls
         typeInfo = cls.info
 
-        for statement in cls.defs.body:
-            if not isinstance(statement, AssignmentStmt):
+        cases = [
+            typeInfo[lval.name].node for statement in cls.defs.body
+            if isinstance(statement, AssignmentStmt)
+            for lval in statement.lvalues if isinstance(lval, NameExpr)
+        ]
+
+        for case in cases:
+            if not isinstance(case, Var):
                 continue
 
-            for lval in statement.lvalues:
-                if not isinstance(lval, NameExpr):
-                    continue
+            print(f'Identified ADT case {case}')
 
-                node = typeInfo.names[lval.name].node
-                if not isinstance(node, Var):
-                    continue
+            # Argument(variable=case, type_annotation=typeInfo[case.name()].type, initializer=None, kind=ARG_POS)
 
-                print(f'Identified node {node}')
+            assert case.type
+
+            # Accessor method (lowercase)
+            add_method(context,
+                       name=case.name().lower(),
+                       args=[],
+                       return_type=case.type)
 
     def get_class_decorator_hook(
             self,

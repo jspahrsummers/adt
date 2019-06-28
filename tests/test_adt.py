@@ -1,12 +1,11 @@
 import unittest
 from typing import Any, Generic, NoReturn, Tuple, TypeVar
 
+from adt.decorator import adt
 from hypothesis import given
 from hypothesis.strategies import (builds, deferred, from_type, integers, just,
                                    one_of, register_type_strategy, text,
                                    tuples)
-
-from adt.decorator import adt
 
 _L = TypeVar('_L')
 _R = TypeVar('_R')

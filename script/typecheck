@@ -8,4 +8,4 @@ PROJECT_NAME=$(basename "$PWD")
 # shellcheck disable=SC1091
 . venv/bin/activate
 
-mypy --strict --ignore-missing-imports -p "$PROJECT_NAME" -p tests
+mypy --strict --ignore-missing-imports --implicit-reexport "$@" -p "$PROJECT_NAME" -p tests

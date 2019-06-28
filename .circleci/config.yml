@@ -1,0 +1,121 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+
+defaults: &defaults
+  docker:
+    # https://circleci.com/docs/2.0/circleci-images/
+    - image: circleci/python:3.7.2-stretch
+
+  working_directory: ~/adt
+
+jobs:
+  shellcheck:
+    docker:
+      - image: koalaman/shellcheck-alpine:stable
+    steps:
+      - checkout
+      - run:
+          name: Check Scripts
+          command: shellcheck --external-sources script/*
+
+  test:
+    <<: *defaults
+
+    parallelism: 4
+
+    steps:
+      - checkout
+
+      # Note that race conditions between workflows are possible here:
+      # https://circleci.com/docs/2.0/caching/#writing-to-the-cache-in-workflows
+      #
+      # As long as the caching is deterministic, this _should_ be OK.
+      - restore_cache: &default_restore_cache
+          keys:
+            # When requirements change, use increasingly general patterns to restore cache.
+            - v2-dependencies-{{ checksum "requirements.txt" }}
+            - v2-dependencies-
+
+      - run: &bootstrap
+          name: install dependencies
+          command: script/bootstrap
+
+      - save_cache: &default_save_cache
+          paths:
+            - ./venv
+          key: v2-dependencies-{{ checksum "requirements.txt" }}
+
+      - run:
+          name: run tests
+          command: script/test
+
+  test installing:
+    <<: *defaults
+
+    steps:
+      - checkout
+      
+      - run:
+          command: script/test_install
+  
+  contribution guidelines:
+    <<: *defaults
+
+    steps:
+      - checkout
+
+      - restore_cache: *default_restore_cache
+      - run: *bootstrap
+      - save_cache: *default_save_cache
+
+      - run:
+          name: typecheck
+          command: script/typecheck
+      
+      - run:
+          name: check formatting
+          when: always
+          command: script/reformat --diff
+  
+  deploy:
+    <<: *defaults
+
+    steps:
+      - checkout
+    
+      - run:
+          name: deploy
+          command: script/deploy
+  
+versiontags: &versiontags
+  tags:
+    only: /^v.*/
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - shellcheck:
+          filters:
+            <<: *versiontags
+      - test:
+          filters:
+            <<: *versiontags
+      - test installing:
+          filters:
+            <<: *versiontags
+      - contribution guidelines:
+          filters:
+            <<: *versiontags
+      - deploy:
+          requires:
+            - test
+            - test installing
+            - contribution guidelines
+          filters:
+            <<: *versiontags
+            branches:
+              ignore: /.*/

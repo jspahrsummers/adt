@@ -47,7 +47,7 @@ def adt(cls):
             else:
                 return None
 
-        setattr(cls, caseName.lower(), property(fget=accessor))
+        setattr(cls, caseName.lower(), accessor)
 
     def match(self, **kwargs):
         cases = set(type(self)._Key.__members__.keys())

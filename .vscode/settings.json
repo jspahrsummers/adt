@@ -5,6 +5,7 @@
     "python.linting.mypyArgs": [
         "--strict",
         "--ignore-missing-imports",
+        "--implicit-reexport",
         "--follow-imports=silent",
         "--show-column-numbers"
     ],

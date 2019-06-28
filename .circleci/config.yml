@@ -7,7 +7,7 @@ version: 2
 defaults: &defaults
   docker:
     # https://circleci.com/docs/2.0/circleci-images/
-    - image: circleci/python:3.7.2-stretch
+    - image: circleci/python:3.7.3
 
   working_directory: ~/adt
 

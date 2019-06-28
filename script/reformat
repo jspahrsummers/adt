@@ -8,4 +8,4 @@ PROJECT_NAME=$(basename "$PWD")
 # shellcheck disable=SC1091
 . venv/bin/activate
 
-yapf -r "$@" -- "$PROJECT_NAME" tests/
+yapf -r "$@" -- "$PROJECT_NAME/" tests/

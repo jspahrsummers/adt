@@ -1,4 +1,4 @@
-# adt
+# adt [![CircleCI](https://circleci.com/gh/jspahrsummers/adt.svg?style=svg&circle-token=2652421c13c636b5da0c992d77ec2fb0b128dd49)](https://circleci.com/gh/jspahrsummers/adt)
 
 Algebraic data types for Python.
 

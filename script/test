@@ -17,5 +17,3 @@ then
 else
     coverage run --source "$PROJECT_NAME/" -m unittest -v -- tests/test_*.py
 fi
-
-coveralls

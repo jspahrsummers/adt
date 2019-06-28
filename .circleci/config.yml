@@ -19,7 +19,7 @@ jobs:
       - checkout
       - run:
           name: Check Scripts
-          command: shellcheck --external-sources script/*
+          command: shellcheck --external-sources $(find script -type f -perm 0755)
 
   test:
     <<: *defaults

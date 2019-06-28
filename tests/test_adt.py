@@ -134,6 +134,5 @@ class TestADT(unittest.TestCase):
                 xs.cons(), xs.match(nil=invalidPatternMatch, cons=lambda x: x))
         else:
             self.assertIsNone(xs.cons())
-
-            with self.assertRaises(AssertionError):
-                xs.match(nil=lambda x: x, cons=invalidPatternMatch)
+            self.assertEqual(
+                xs.match(nil=lambda x: "foo", cons=invalidPatternMatch), "foo")

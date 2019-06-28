@@ -155,9 +155,12 @@ class ADTPlugin(Plugin):
                 [
                     case.type
                     or mypy.types.AnyType(mypy.types.TypeOfAny.unannotated)
-                ], [ARG_POS], [None],
+                ],
+                [ARG_POS],
+                [None],
                 # FIXME: This should be matchTVarType, but it currently fails to unify with actual examples for some reason.
-                mypy.types.AnyType(mypy.types.TypeOfAny.implementation_artifact),
+                mypy.types.AnyType(mypy.types.TypeOfAny.implementation_artifact
+                                   ),
                 context.api.named_type('__builtins__.function'))
             for case in cases
         }

@@ -71,6 +71,7 @@ class ADTPlugin(Plugin):
 
         func = FuncDef(name, args, Block([PassStmt()]))
         func.info = info
+        func.is_class = is_classmethod
         func.type = set_callable_name(signature, func)
         func._fullname = info.fullname() + '.' + name
         func.line = info.line
@@ -83,22 +84,7 @@ class ADTPlugin(Plugin):
             info.names[r_name] = info.names[name]
 
         info.defn.defs.body.append(func)
-
-        if is_classmethod:
-            v = Var(name, func.type)
-            v.is_classmethod = True
-            v.info = info
-            v._fullname = func._fullname
-            dec = Decorator(func, [NameExpr('classmethod')], v)
-            info.defn.defs.body.append(dec)
-
-            info.names[name] = SymbolTableNode(MDEF,
-                                               dec,
-                                               plugin_generated=True)
-        else:
-            info.names[name] = SymbolTableNode(MDEF,
-                                               func,
-                                               plugin_generated=True)
+        info.names[name] = SymbolTableNode(MDEF, func, plugin_generated=True)
 
     def _transform_class(self, context: ClassDefContext) -> None:
         cls = context.cls

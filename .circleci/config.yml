@@ -24,7 +24,7 @@ jobs:
   test:
     <<: *defaults
 
-    parallelism: 4
+    parallelism: 1
 
     steps:
       - checkout

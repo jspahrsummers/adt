@@ -45,30 +45,30 @@ class OverriddenMatch:
 class TestOverrides(unittest.TestCase):
     def test_overriddenAccessorIntvalue(self) -> None:
         x = OverriddenAccessors.INTVALUE(5)
-        self.assertEquals(x.intvalue, 5)
+        self.assertEqual(x.intvalue, 5)
         self.assertIsNone(x.strvalue)
-        self.assertEquals(
+        self.assertEqual(
             x.match(intvalue=lambda x: x,
                     strvalue=helpers.invalidPatternMatch), 5)
 
     def test_overriddenAccessorStrvalue(self) -> None:
         x = OverriddenAccessors.STRVALUE("foobar")
         self.assertIsNone(x.intvalue)
-        self.assertEquals(x.strvalue, "foobar")
-        self.assertEquals(
+        self.assertEqual(x.strvalue, "foobar")
+        self.assertEqual(
             x.match(intvalue=helpers.invalidPatternMatch,
                     strvalue=lambda x: x), "foobar")
 
     def test_overriddenMatchIntvalue(self) -> None:
         x = OverriddenMatch.INTVALUE(5)
-        self.assertEquals(x.intvalue(), 5)
-        self.assertEquals(
+        self.assertEqual(x.intvalue(), 5)
+        self.assertEqual(
             x.match(intvalue=lambda x: str(x),
                     strvalue=helpers.invalidPatternMatch), "5")
 
     def test_overriddenMatchStrvalue(self) -> None:
         x = OverriddenMatch.STRVALUE("foobar")
-        self.assertEquals(x.strvalue(), "foobar")
-        self.assertEquals(
+        self.assertEqual(x.strvalue(), "foobar")
+        self.assertEqual(
             x.match(intvalue=helpers.invalidPatternMatch,
                     strvalue=lambda x: x), "foobar")

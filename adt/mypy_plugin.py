@@ -96,31 +96,30 @@ class ADTPlugin(Plugin):
             if isinstance(node, Var)
         ]
 
-    def _add_typevar_in_type(self, context: ClassDefContext,
-                             typeInfo: TypeInfo,
-                             tVarName: str) -> mypy.types.TypeVarType:
+    def _add_typevar(self, context: ClassDefContext,
+                     tVarName: str) -> mypy.types.TypeVarDef:
+        typeInfo = context.cls.info
         tVarQualifiedName = f'{typeInfo.fullname()}.{tVarName}'
         objectType = context.api.named_type('__builtins__.object')
 
         tVarExpr = TypeVarExpr(tVarName, tVarQualifiedName, [], objectType)
         typeInfo.names[tVarName] = SymbolTableNode(MDEF, tVarExpr)
 
-        tVarDef = mypy.types.TypeVarDef(tVarName, tVarQualifiedName, -1, [],
-                                        objectType)
-        return mypy.types.TypeVarType(tVarDef)
+        return mypy.types.TypeVarDef(tVarName, tVarQualifiedName, -1, [],
+                                     objectType)
 
-    def _callable_type_for_adt_case(self, context: ClassDefContext,
-                                    case: Var) -> mypy.types.CallableType:
-        return mypy.types.CallableType(
+    def _callable_type_for_adt_case(self, context: ClassDefContext, case: Var,
+                                    resultType: mypy.types.TypeVarDef
+                                    ) -> mypy.types.CallableType:
+        callableType = mypy.types.CallableType(
             [
                 case.type
                 or mypy.types.AnyType(mypy.types.TypeOfAny.unannotated)
-            ],
-            [ARG_POS],
-            [None],
-            # TODO: Create a new TypeVar for each Callable return type
-            mypy.types.AnyType(mypy.types.TypeOfAny.implementation_artifact),
+            ], [ARG_POS], [None], mypy.types.TypeVarType(resultType),
             context.api.named_type('__builtins__.function'))
+
+        callableType.variables = [resultType]
+        return callableType
 
     def _transform_class(self, context: ClassDefContext) -> None:
         cls = context.cls
@@ -152,8 +151,12 @@ class ADTPlugin(Plugin):
                              args=[],
                              return_type=case.type)
 
+        matchResultType = self._add_typevar(context, '_MatchResult')
+
         caseCallables = {
-            case: self._callable_type_for_adt_case(context, case)
+            case: self._callable_type_for_adt_case(context,
+                                                   case,
+                                                   resultType=matchResultType)
             for case in cases
         }
 
@@ -166,14 +169,11 @@ class ADTPlugin(Plugin):
             for case, callableType in caseCallables.items()
         ]
 
-        self._add_method(
-            context,
-            name='match',
-            args=matchArgs,
-            # TODO: Create a Union here of all `callableType`s return types
-            return_type=self._add_typevar_in_type(context,
-                                                  typeInfo,
-                                                  tVarName='_MatchResult'))
+        self._add_method(context,
+                         name='match',
+                         args=matchArgs,
+                         return_type=mypy.types.TypeVarType(matchResultType),
+                         tvar_def=matchResultType)
 
     def get_class_decorator_hook(
             self,

@@ -3,10 +3,9 @@ from typing import Generic, Tuple, TypeVar
 
 from adt.decorator import adt
 from hypothesis import given
-from hypothesis.strategies import (builds, deferred, from_type, just, one_of,
-                                   register_type_strategy, tuples, integers)
-
-import helpers
+from hypothesis.strategies import (builds, deferred, from_type, integers, just,
+                                   one_of, register_type_strategy, tuples)
+from tests import helpers
 
 _T = TypeVar('_T')
 

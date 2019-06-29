@@ -5,8 +5,7 @@ from adt.decorator import adt
 from hypothesis import given
 from hypothesis.strategies import (builds, from_type, one_of,
                                    register_type_strategy)
-
-import helpers
+from tests import helpers
 
 _L = TypeVar('_L')
 _R = TypeVar('_R')

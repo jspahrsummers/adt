@@ -24,12 +24,14 @@ def adt(cls):
     def _repr(self):
         return f'{type(self)}.{self._key.name}({self._value})'
 
-    cls.__repr__ = _repr
+    if '__repr__' not in cls.__dict__:
+        cls.__repr__ = _repr
 
     def _str(self):
         return f'<{type(self)}.{self._key.name}: {self._value}>'
 
-    cls.__str__ = _str
+    if '__str__' not in cls.__dict__:
+        cls.__str__ = _str
 
     def _eq(self, other, cls=cls):
         if not isinstance(other, cls):
@@ -37,7 +39,8 @@ def adt(cls):
 
         return self._key == other._key and self._value == other._value
 
-    cls.__eq__ = _eq
+    if '__eq__' not in cls.__dict__:
+        cls.__eq__ = _eq
 
     for caseName, key in cls._Key.__members__.items():
 
@@ -59,7 +62,8 @@ def adt(cls):
 
             return self._value
 
-        setattr(cls, caseName.lower(), accessor)
+        if caseName.lower() not in cls.__dict__:
+            setattr(cls, caseName.lower(), accessor)
 
     def match(self, **kwargs):
         cases = set(type(self)._Key.__members__.keys())
@@ -74,6 +78,7 @@ def adt(cls):
         raise ValueError(
             f'{self} failed pattern match against all of: {predicates}')
 
-    cls.match = match
+    if 'match' not in cls.__dict__:
+        cls.match = match
 
     return cls

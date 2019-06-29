@@ -17,12 +17,12 @@ def adt(cls):
     cls.__init__ = _init
 
     def _repr(self):
-        return f'{type(self)}.{self._key}({self._value})'
+        return f'{type(self)}.{self._key.name}({self._value})'
 
     cls.__repr__ = _repr
 
     def _str(self):
-        return f'<{type(self)}.{self._key}: {self._value}>'
+        return f'<{type(self)}.{self._key.name}: {self._value}>'
 
     cls.__str__ = _str
 
@@ -44,7 +44,7 @@ def adt(cls):
         def accessor(self, _key=key):
             if self._key != _key:
                 raise AttributeError(
-                    f'{self} was constructed as case {self._key}, so {_key} is not accessible'
+                    f'{self} was constructed as case {self._key.name}, so {_key.name} is not accessible'
                 )
 
             return self._value

@@ -13,24 +13,24 @@ _R = TypeVar('_R')
 
 
 @adt
-class EitherADT(Generic[_L, _R]):
+class Either(Generic[_L, _R]):
     LEFT: _L
     RIGHT: _R
 
 
 register_type_strategy(
-    EitherADT,
-    one_of(builds(EitherADT.LEFT, helpers.any_types),
-           builds(EitherADT.RIGHT, helpers.any_types)))
+    Either,
+    one_of(builds(Either.LEFT, helpers.any_types),
+           builds(Either.RIGHT, helpers.any_types)))
 
 
 class TestEither(unittest.TestCase):
     def test_left(self) -> None:
-        e: EitherADT[int, str] = EitherADT.LEFT(5)
-        self.assertEqual(e, EitherADT.LEFT(5))
+        e: Either[int, str] = Either.LEFT(5)
+        self.assertEqual(e, Either.LEFT(5))
         self.assertEqual(e.left(), 5)
 
-        self.assertNotEqual(e, EitherADT.RIGHT(5))
+        self.assertNotEqual(e, Either.RIGHT(5))
         self.assertIsNone(e.right())
 
         self.assertEqual(
@@ -38,29 +38,27 @@ class TestEither(unittest.TestCase):
             6)
 
     def test_right(self) -> None:
-        e: EitherADT[int, str] = EitherADT.RIGHT("foobar")
-        self.assertEqual(e, EitherADT.RIGHT("foobar"))
+        e: Either[int, str] = Either.RIGHT("foobar")
+        self.assertEqual(e, Either.RIGHT("foobar"))
         self.assertEqual(e.right(), "foobar")
 
-        self.assertNotEqual(e, EitherADT.LEFT("foobar"))
+        self.assertNotEqual(e, Either.LEFT("foobar"))
         self.assertIsNone(e.left())
 
         self.assertEqual(
             e.match(left=helpers.invalidPatternMatch, right=lambda s: s + "z"),
             "foobarz")
 
-    @given(from_type(EitherADT))
-    def test_equalsItself(self, e: EitherADT[_L, _R]) -> None:
+    @given(from_type(Either))
+    def test_equalsItself(self, e: Either[_L, _R]) -> None:
         self.assertEqual(e, e)
 
-    @given(from_type(EitherADT))
-    def test_exhaustivePatternMatchSucceeds(self,
-                                            e: EitherADT[_L, _R]) -> None:
+    @given(from_type(Either))
+    def test_exhaustivePatternMatchSucceeds(self, e: Either[_L, _R]) -> None:
         self.assertTrue(e.match(left=lambda x: True, right=lambda x: True))
 
-    @given(from_type(EitherADT))
-    def test_inexhaustivePatternMatchThrows(self,
-                                            e: EitherADT[_L, _R]) -> None:
+    @given(from_type(Either))
+    def test_inexhaustivePatternMatchThrows(self, e: Either[_L, _R]) -> None:
         with self.assertRaises((AssertionError, RuntimeError)):
             e.match()  # type: ignore
 
@@ -70,9 +68,8 @@ class TestEither(unittest.TestCase):
         with self.assertRaises((AssertionError, RuntimeError)):
             e.match(right=lambda x: True)  # type: ignore
 
-    @given(from_type(EitherADT))
-    def test_accessorsConsistentWithMatching(self,
-                                             e: EitherADT[_L, _R]) -> None:
+    @given(from_type(Either))
+    def test_accessorsConsistentWithMatching(self, e: Either[_L, _R]) -> None:
         if e.match(left=lambda x: False, right=lambda x: True):
             self.assertIsNone(e.left())
             self.assertIsNotNone(e.right())

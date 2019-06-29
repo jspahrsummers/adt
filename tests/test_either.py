@@ -30,7 +30,8 @@ class TestEither(unittest.TestCase):
         self.assertEqual(e.left(), 5)
 
         self.assertNotEqual(e, Either.RIGHT(5))
-        self.assertIsNone(e.right())
+        with self.assertRaises(AttributeError):
+            e.right()
 
         self.assertEqual(
             e.match(left=lambda n: n + 1, right=helpers.invalidPatternMatch),
@@ -42,7 +43,8 @@ class TestEither(unittest.TestCase):
         self.assertEqual(e.right(), "foobar")
 
         self.assertNotEqual(e, Either.LEFT("foobar"))
-        self.assertIsNone(e.left())
+        with self.assertRaises(AttributeError):
+            e.left()
 
         self.assertEqual(
             e.match(left=helpers.invalidPatternMatch, right=lambda s: s + "z"),
@@ -70,14 +72,20 @@ class TestEither(unittest.TestCase):
     @given(from_type(Either))
     def test_accessorsConsistentWithMatching(self, e: Either[_L, _R]) -> None:
         if e.match(left=lambda x: False, right=lambda x: True):
-            self.assertIsNone(e.left())
             self.assertIsNotNone(e.right())
+
+            with self.assertRaises(AttributeError):
+                e.left()
+
             self.assertEqual(
                 e.right(),
                 e.match(left=helpers.invalidPatternMatch, right=lambda x: x))
         else:
             self.assertIsNotNone(e.left())
-            self.assertIsNone(e.right())
+
+            with self.assertRaises(AttributeError):
+                e.right()
+
             self.assertEqual(
                 e.left(),
                 e.match(left=lambda x: x, right=helpers.invalidPatternMatch))

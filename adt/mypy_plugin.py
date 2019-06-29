@@ -26,7 +26,7 @@ class ADTPlugin(Plugin):
             args: List[Argument],
             return_type: mypy.types.Type,
             self_type: Optional[mypy.types.Type] = None,
-            tvar_def: Optional[mypy.types.TypeVarDef] = None,
+            tvar_defs: Optional[List[mypy.types.TypeVarDef]] = None,
             is_classmethod: bool = False,
     ) -> None:
         """Adds a new method to a class.
@@ -66,8 +66,8 @@ class ADTPlugin(Plugin):
 
         signature = mypy.types.CallableType(arg_types, arg_kinds, arg_names,
                                             return_type, function_type)
-        if tvar_def:
-            signature.variables = [tvar_def]
+        if tvar_defs:
+            signature.variables = tvar_defs
 
         func = FuncDef(name, args, Block([PassStmt()]))
         func.info = info
@@ -151,13 +151,16 @@ class ADTPlugin(Plugin):
                              args=[],
                              return_type=case.type)
 
-        matchResultType = self._add_typevar(context, '_MatchResult')
+        matchResultTypes = {
+            case: self._add_typevar(context, f'_MatchResult_{case.name()}')
+            for case in cases
+        }
 
         caseCallables = {
             case: self._callable_type_for_adt_case(context,
                                                    case,
-                                                   resultType=matchResultType)
-            for case in cases
+                                                   resultType=resultType)
+            for case, resultType in matchResultTypes.items()
         }
 
         # `match` method for pattern matching (uses lowercase case names)
@@ -169,11 +172,15 @@ class ADTPlugin(Plugin):
             for case, callableType in caseCallables.items()
         ]
 
-        self._add_method(context,
-                         name='match',
-                         args=matchArgs,
-                         return_type=mypy.types.TypeVarType(matchResultType),
-                         tvar_def=matchResultType)
+        self._add_method(
+            context,
+            name='match',
+            args=matchArgs,
+            return_type=mypy.types.UnionType.make_simplified_union([
+                callableType.ret_type
+                for callableType in caseCallables.values()
+            ]),
+            tvar_defs=list(matchResultTypes.values()))
 
     def get_class_decorator_hook(
             self,

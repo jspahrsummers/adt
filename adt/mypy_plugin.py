@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, List, Optional, Type
 import mypy.types
 from mypy.nodes import (ARG_NAMED, ARG_POS, MDEF, Argument, AssignmentStmt,
                         Block, ClassDef, Decorator, FuncDef, NameExpr,
-                        PassStmt, SymbolTableNode, TypeVarExpr, Var)
+                        PassStmt, SymbolTableNode, TypeInfo, TypeVarExpr, Var)
 from mypy.plugin import ClassDefContext, Plugin
 from mypy.plugins.common import add_method
 from mypy.semanal import set_callable_name
@@ -86,6 +86,41 @@ class ADTPlugin(Plugin):
         info.defn.defs.body.append(func)
         info.names[name] = SymbolTableNode(MDEF, func, plugin_generated=True)
 
+    def _get_class_vars(self, cls: ClassDef) -> List[Var]:
+        return [
+            node for node in (cls.info[lval.name].node
+                              for statement in cls.defs.body
+                              if isinstance(statement, AssignmentStmt)
+                              for lval in statement.lvalues
+                              if isinstance(lval, NameExpr))
+            if isinstance(node, Var)
+        ]
+
+    def _add_typevar(self, context: ClassDefContext,
+                     tVarName: str) -> mypy.types.TypeVarDef:
+        typeInfo = context.cls.info
+        tVarQualifiedName = f'{typeInfo.fullname()}.{tVarName}'
+        objectType = context.api.named_type('__builtins__.object')
+
+        tVarExpr = TypeVarExpr(tVarName, tVarQualifiedName, [], objectType)
+        typeInfo.names[tVarName] = SymbolTableNode(MDEF, tVarExpr)
+
+        return mypy.types.TypeVarDef(tVarName, tVarQualifiedName, -1, [],
+                                     objectType)
+
+    def _callable_type_for_adt_case(self, context: ClassDefContext, case: Var,
+                                    resultType: mypy.types.TypeVarDef
+                                    ) -> mypy.types.CallableType:
+        callableType = mypy.types.CallableType(
+            [
+                case.type
+                or mypy.types.AnyType(mypy.types.TypeOfAny.unannotated)
+            ], [ARG_POS], [None], mypy.types.TypeVarType(resultType),
+            context.api.named_type('__builtins__.function'))
+
+        callableType.variables = [resultType]
+        return callableType
+
     def _transform_class(self, context: ClassDefContext) -> None:
         cls = context.cls
         typeInfo = cls.info
@@ -93,14 +128,7 @@ class ADTPlugin(Plugin):
         instanceType = fill_typevars(typeInfo)
         assert isinstance(instanceType, mypy.types.Instance)
 
-        cases = [
-            node for node in (typeInfo[lval.name].node
-                              for statement in cls.defs.body
-                              if isinstance(statement, AssignmentStmt)
-                              for lval in statement.lvalues
-                              if isinstance(lval, NameExpr))
-            if isinstance(node, Var)
-        ]
+        cases = self._get_class_vars(cls)
 
         for case in cases:
             assert case.type, 'Untyped cases are not currently supported in adt.mypy_plugin'
@@ -123,31 +151,12 @@ class ADTPlugin(Plugin):
                              args=[],
                              return_type=case.type)
 
-        # Add a TypeVar to the class definition for use in `match`
-        tVarName = '_MatchResult'
-        tVarQualifiedName = f'{typeInfo.fullname()}.{tVarName}'
-        objectType = context.api.named_type('__builtins__.object')
-
-        matchTVarExpr = TypeVarExpr(tVarName, tVarQualifiedName, [],
-                                    objectType)
-        typeInfo.names[tVarName] = SymbolTableNode(MDEF, matchTVarExpr)
-
-        matchTVarDef = mypy.types.TypeVarDef(tVarName, tVarQualifiedName, -1,
-                                             [], objectType)
-        matchTVarType = mypy.types.TypeVarType(matchTVarDef)
+        matchResultType = self._add_typevar(context, '_MatchResult')
 
         caseCallables = {
-            case: mypy.types.CallableType(
-                [
-                    case.type
-                    or mypy.types.AnyType(mypy.types.TypeOfAny.unannotated)
-                ],
-                [ARG_POS],
-                [None],
-                # FIXME: This should be matchTVarType, but it currently fails to unify with actual examples for some reason.
-                mypy.types.AnyType(mypy.types.TypeOfAny.implementation_artifact
-                                   ),
-                context.api.named_type('__builtins__.function'))
+            case: self._callable_type_for_adt_case(context,
+                                                   case,
+                                                   resultType=matchResultType)
             for case in cases
         }
 
@@ -159,10 +168,12 @@ class ADTPlugin(Plugin):
                      kind=ARG_NAMED)
             for case, callableType in caseCallables.items()
         ]
+
         self._add_method(context,
                          name='match',
                          args=matchArgs,
-                         return_type=matchTVarType)
+                         return_type=mypy.types.TypeVarType(matchResultType),
+                         tvar_def=matchResultType)
 
     def get_class_decorator_hook(
             self,

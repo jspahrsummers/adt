@@ -42,10 +42,12 @@ def adt(cls):
         setattr(cls, caseName, classmethod(constructor))
 
         def accessor(self, _key=key):
-            if self._key == _key:
-                return self._value
-            else:
-                return None
+            if self._key != _key:
+                raise AttributeError(
+                    f'{self} was constructed as case {self._key}, so {_key} is not accessible'
+                )
+
+            return self._value
 
         setattr(cls, caseName.lower(), accessor)
 

@@ -5,9 +5,14 @@ from typing import no_type_check
 
 @no_type_check
 def adt(cls):
-    cls._Key = Enum(
-        '_Key',
-        [k for k in cls.__annotations__.keys() if not k.startswith('__')])
+    try:
+        annotations = cls.__annotations__
+    except AttributeError:
+        # no annotations defined
+        return cls
+
+    cls._Key = Enum('_Key',
+                    [k for k in annotations.keys() if not k.startswith('__')])
 
     def _init(self, key, value, orig_init=cls.__init__):
         self._key = key

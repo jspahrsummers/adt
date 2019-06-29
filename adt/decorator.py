@@ -44,6 +44,11 @@ def adt(cls):
         def constructor(cls, value, _key=key):
             return cls(key=_key, value=value)
 
+        if hasattr(cls, caseName):
+            raise AttributeError(
+                f'{cls} should not have a default value for {caseName}, as this will be a generated constructor'
+            )
+
         setattr(cls, caseName, classmethod(constructor))
 
         def accessor(self, _key=key):

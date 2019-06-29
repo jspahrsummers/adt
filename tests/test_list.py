@@ -57,12 +57,17 @@ class TestList(unittest.TestCase):
     @given(from_type(ListADT))
     def test_accessorsConsistentWithMatching(self, xs: ListADT[_T]) -> None:
         if xs.match(nil=lambda x: False, cons=lambda x: True):
+            with self.assertRaises(AttributeError):
+                xs.nil()
+
             self.assertIsNotNone(xs.cons())
             self.assertEqual(
                 xs.cons(),
                 xs.match(nil=helpers.invalidPatternMatch, cons=lambda x: x))
         else:
-            self.assertIsNone(xs.cons())
+            with self.assertRaises(AttributeError):
+                xs.cons()
+
             self.assertEqual(
                 xs.match(nil=lambda x: "foo",
                          cons=helpers.invalidPatternMatch), "foo")

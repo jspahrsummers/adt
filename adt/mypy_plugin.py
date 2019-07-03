@@ -19,6 +19,7 @@ def plugin(version: str) -> Type[Plugin]:
 
 
 class ADTPlugin(Plugin):
+    # Fully-qualified name for @adt
     _ADT_DECORATOR = 'adt.decorator.adt'
 
     # mypy plugin API hook
@@ -86,6 +87,7 @@ def _transform_class(context: ClassDefContext) -> None:
                 tvar_def=matchResultType)
 
 
+# Returns typed class variables (similar to cls.__annotations__ at runtime).
 def _get_class_vars(cls: ClassDef) -> List[Var]:
     return [
         node
@@ -96,6 +98,8 @@ def _get_class_vars(cls: ClassDef) -> List[Var]:
     ]
 
 
+# Generates a new, unique, unbounded type variable and defines it within the
+# body of the given class.
 def _add_typevar(context: ClassDefContext,
                  tVarName: str) -> mypy.types.TypeVarDef:
     typeInfo = context.cls.info
@@ -109,6 +113,8 @@ def _add_typevar(context: ClassDefContext,
                                  objectType)
 
 
+# Determines the Callable type appropriate for destructuring the ADT case
+# described by `case`.
 def _callable_type_for_adt_case(context: ClassDefContext, case: Var,
                                 resultType: mypy.types.TypeVarDef
                                 ) -> mypy.types.CallableType:

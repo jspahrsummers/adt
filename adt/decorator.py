@@ -80,15 +80,17 @@ def adt(cls):
         if caseName.lower() not in cls.__dict__:
             setattr(cls, caseName.lower(), accessor)
 
-    def match(self, **kwargs):
-        cases = set(type(self)._Key.__members__.keys())
-        predicates = {k.upper() for k in kwargs.keys()}
+    def match(self, _caseConstructors=caseConstructors, **kwargs):
+        upperKeys = {k: k.upper() for k in kwargs.keys()}
 
-        assert cases == predicates, f'Pattern match on {self} ({predicates}) is over- or under-specified vs. {cases}'
+        assert set(upperKeys.values()) == set(
+            _caseConstructors.keys()
+        ), f'Pattern match on {self} ({upperKeys.values()}) is over- or under-specified vs. {_caseConstructors.keys()}'
 
         for key, callback in kwargs.items():
-            if self._key == type(self)._Key[key.upper()]:
-                return callback(self._value)
+            if self._key == type(self)._Key[upperKeys[key]]:
+                return _caseConstructors[upperKeys[key]].deconstructCase(
+                    self._value, callback)
 
         raise ValueError(
             f'{self} failed pattern match against all of: {predicates}')

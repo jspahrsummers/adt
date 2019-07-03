@@ -1,6 +1,7 @@
 from typing import Any, Callable, Tuple, Type, TypeVar, Union
 
 _T = TypeVar('_T')
+_U = TypeVar('_U')
 
 
 class TupleConstructor:
@@ -11,6 +12,11 @@ class TupleConstructor:
     def constructCase(self, *args: Any) -> Tuple[Any, ...]:
         assert len(args) == len(self._types)
         return (*args, )
+
+    def deconstructCase(self, value: Tuple[Any, ...],
+                        callback: Callable[..., _T]) -> _T:
+        assert len(value) == len(self._types)
+        return callback(*value)
 
     def __repr__(self) -> str:
         typeString = ', '.join((str(t) for t in self._types))
@@ -25,6 +31,9 @@ class IdentityConstructor:
     def constructCase(self, arg: _T) -> _T:
         return arg
 
+    def deconstructCase(self, value: _T, callback: Callable[[_T], _U]) -> _U:
+        return callback(value)
+
     def __repr__(self) -> str:
         return f'Case[{self._argType}]'
 
@@ -35,6 +44,9 @@ class CaseConstructor:
 
     def constructCase(self) -> None:
         return None
+
+    def deconstructCase(self, value: None, callback: Callable[[], _T]) -> _T:
+        return callback()
 
     def __getitem__(self, params: Union[None, Type[Any], Tuple[Type[Any], ...]]
                     ) -> AnyConstructor:

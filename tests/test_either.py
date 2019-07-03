@@ -60,13 +60,13 @@ class TestEither(unittest.TestCase):
 
     @given(from_type(Either))
     def test_inexhaustivePatternMatchThrows(self, e: Either[_L, _R]) -> None:
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             e.match()  # type: ignore
 
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             e.match(left=lambda x: True)  # type: ignore
 
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             e.match(right=lambda x: True)  # type: ignore
 
     @given(from_type(Either))

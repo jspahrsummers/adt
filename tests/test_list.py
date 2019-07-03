@@ -45,13 +45,13 @@ class TestList(unittest.TestCase):
 
     @given(from_type(ListADT))
     def test_inexhaustivePatternMatchThrows(self, xs: ListADT[_T]) -> None:
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             xs.match()  # type: ignore
 
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             xs.match(nil=lambda x: True)  # type: ignore
 
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             xs.match(cons=lambda x: True)  # type: ignore
 
     @given(from_type(ListADT))

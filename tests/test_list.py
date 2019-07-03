@@ -1,7 +1,7 @@
 import unittest
 from typing import Generic, Tuple, TypeVar
 
-from adt.decorator import adt
+from adt import Case, adt
 from hypothesis import given
 from hypothesis.strategies import (builds, deferred, from_type, integers, just,
                                    one_of, register_type_strategy, tuples)
@@ -12,8 +12,8 @@ _T = TypeVar('_T')
 
 @adt
 class ListADT(Generic[_T]):
-    NIL: None
-    CONS: Tuple[_T, "ListADT[_T]"]
+    NIL: Case
+    CONS: Case[_T, "ListADT[_T]"]
 
 
 register_type_strategy(

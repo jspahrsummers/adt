@@ -2,6 +2,8 @@ from copy import copy
 from enum import Enum
 from typing import no_type_check
 
+from .case import CaseConstructor
+
 
 @no_type_check
 def adt(cls):
@@ -11,8 +13,18 @@ def adt(cls):
         # no annotations defined
         return cls
 
-    cls._Key = Enum('_Key',
-                    [k for k in annotations.keys() if not k.startswith('__')])
+    caseConstructors = {
+        k: constructor
+        for k, constructor in annotations.items() if not k.startswith('__')
+    }
+
+    for k, constructor in caseConstructors.items():
+        if not hasattr(constructor, 'constructCase'):
+            raise TypeError(
+                f'Annotation {k} should be a Case[…] constructor, got {constructor!r} instead'
+            )
+
+    cls._Key = Enum('_Key', list(caseConstructors.keys()))
 
     def _init(self, key, value, orig_init=cls.__init__):
         self._key = key
@@ -44,8 +56,11 @@ def adt(cls):
 
     for caseName, key in cls._Key.__members__.items():
 
-        def constructor(cls, value, _key=key):
-            return cls(key=_key, value=value)
+        def constructor(cls,
+                        *args,
+                        _key=key,
+                        _caseConstructor=caseConstructors[caseName]):
+            return cls(key=_key, value=_caseConstructor.constructCase(*args))
 
         if hasattr(cls, caseName):
             raise AttributeError(

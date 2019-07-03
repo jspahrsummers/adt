@@ -30,12 +30,14 @@ class IdentityConstructor:
 
 
 class CaseConstructor:
+    AnyConstructor = Union["CaseConstructor", IdentityConstructor,
+                           TupleConstructor]
+
     def constructCase(self) -> None:
         return None
 
-    def __getitem__(
-            self, params: Union[None, Type[Any], Tuple[Type[Any], ...]]
-    ) -> Union["CaseConstructor", IdentityConstructor, TupleConstructor]:
+    def __getitem__(self, params: Union[None, Type[Any], Tuple[Type[Any], ...]]
+                    ) -> AnyConstructor:
         if params is None:
             return self
         elif isinstance(params, tuple):
@@ -47,7 +49,7 @@ class CaseConstructor:
         return 'Case'
 
 
-# Case = CaseConstructor()
+Case = CaseConstructor()
 # Case
 # Case[int]
 # Case[int, str]

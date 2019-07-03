@@ -1,50 +1,33 @@
-from abc import ABC, abstractmethod
-from typing import Any, Generic, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Callable, Tuple, Type, TypeVar, Union
 
 _T = TypeVar('_T')
-_Arg = TypeVar('_Arg')
 
 
-class CaseInstantiation(ABC, Generic[_T, _Arg]):
-    @abstractmethod
-    def construct(self, *args: _Arg) -> _T:
-        pass
-
-
-class NoneCase(CaseInstantiation[None, None]):
-    def construct(self, *args: None) -> None:
-        assert len(args) == 0
-        return None
-
-
-class UnaryCase(CaseInstantiation[_T, _T], Generic[Type[_T]]):
-    def __init__(self, argType: Type[_T]):
-        self._argType = argType
-        super().__init__()
-
-    def construct(self, *args: _T) -> _T:
-        assert len(args) == 1
-        return args[0]
-
-
-class TupleCase(CaseInstantiation[Tuple[_Arg, ...], _Arg], Generic[_Arg]):
-    def __init__(self, tupleSize: int, argTypes: Tuple[Type[_Arg], ...]):
-        self._argTypes = argTypes
+class TupleConstructor:
+    def __init__(self, tupleSize: int):
         self._tupleSize = tupleSize
         super().__init__()
 
-    def construct(self, *args: _Arg) -> Tuple[_Arg, ...]:
+    def constructCase(self, *args: Any) -> Tuple[Any, ...]:
         assert len(args) == self._tupleSize
         return (*args, )
 
 
-class CaseDefinition(NoneCase):
-    def __getitem__(self, params: Union[Type[_T], Tuple[Type[_T], ...]]
-                    ) -> CaseInstantiation[Any, _T]:
+class IdentityConstructor:
+    def constructCase(self, arg: _T) -> _T:
+        return arg
+
+
+class CaseDefinition:
+    def constructCase(self) -> None:
+        return None
+
+    def __getitem__(self, params: Union[Type[Any], Tuple[Type[Any], ...]]
+                    ) -> Union[IdentityConstructor, TupleConstructor]:
         if isinstance(params, tuple):
-            return TupleCase(len(params), params)
+            return TupleConstructor(len(params))
         else:
-            return UnaryCase(argType=params)
+            return IdentityConstructor()
 
 
 Case = CaseDefinition()

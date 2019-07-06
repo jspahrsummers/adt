@@ -10,7 +10,7 @@
     1. [Compared to inheritance](#compared-to-inheritance)
     1. [Examples in other programming languages](#examples-in-other-programming-languages)
 1. [Installation](#installation)
-    1. [mypy plugin](#setting-up-the-mypy-plugin)
+    1. [mypy plugin](#mypy-plugin)
 1. [Defining an ADT](#defining-an-adt)
     1. [Generated functionality](#generated-functionality)
     1. [Custom methods](#custom-methods)

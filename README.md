@@ -42,7 +42,7 @@ class Expression:
     DIVIDE: Case["Expression", "Expression"]
 ```
 
-Or more generic sorts of variant type, like one that represent a type A or a type B, but not both:
+Or more generic versions of a variant type, like an `Either` type that represents a type A or a type B, but not both:
 
 ```python
 L = TypeVar('L')

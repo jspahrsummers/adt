@@ -1,3 +1,5 @@
+import itertools
+import re
 from decimal import Decimal
 from typing import Any, Callable, Dict, Iterable, List, NewType, Optional, Type
 
@@ -33,23 +35,53 @@ class ADTPlugin(Plugin):
 
 
 class _CaseDef:
+    context: ClassDefContext
     name: str
-    types: List[mypy.typing.Type]
+    types: List[mypy.types.Type]
 
-    def __init__(self, name: str, types: List[mypy.typing.Type]):
+    def __init__(self, context: ClassDefContext, name: str,
+                 types: List[mypy.types.Type]):
+        self.context = context
         self.name = name
-        self.types = types
+        self.types = self._explode_tuple(types)
         super().__init__()
 
-    def constructor_args(self) -> List[Argument]:
-        pass
+    @staticmethod
+    def _explode_tuple(types: List[mypy.types.Type]) -> List[mypy.types.Type]:
+        if len(types) != 1:
+            return types
 
-    def accessor_return(self) -> mypy.typing.Type:
-        pass
+        t = types[0]
+        if not isinstance(t, mypy.types.TupleType):
+            return types
+
+        return t.items
+
+    def constructor_args(self) -> List[Argument]:
+        return [
+            Argument(variable=Var(f'_{i}', t),
+                     type_annotation=t,
+                     initializer=None,
+                     kind=ARG_POS) for i, t in enumerate(self.types)
+        ]
+
+    def accessor_return(self) -> mypy.types.Type:
+        if len(self.types) == 0:
+            return mypy.types.NoneType()
+        elif len(self.types) == 1:
+            return self.types[0]
+        else:
+            return mypy.types.TupleType(
+                self.types, self.context.api.named_type('builtins.tuple'))
 
     def match_lambda(self,
                      return_type: mypy.types.Type) -> mypy.types.CallableType:
-        pass
+        argKinds = list(itertools.repeat(ARG_POS, len(self.types)))
+        argNames = list(itertools.repeat(None, len(self.types)))
+
+        return mypy.types.CallableType(
+            self.types, argKinds, argNames, return_type,
+            self.context.api.named_type('__builtins__.function'))
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -60,6 +92,13 @@ class _CaseDef:
 
         return self.name == other.name and self.types == other.types
 
+    def __repr__(self) -> str:
+        return f'_CaseDef(name={self.name}, types={self.types!r})'
+
+    def __str__(self) -> str:
+        typeStr = ", ".join((str(t) for t in self.types))
+        return f'{self.name}: Case[{typeStr}]'
+
 
 def _transform_class(context: ClassDefContext) -> None:
     cls = context.cls
@@ -67,7 +106,7 @@ def _transform_class(context: ClassDefContext) -> None:
     instanceType = fill_typevars(cls.info)
     assert isinstance(instanceType, mypy.types.Instance)
 
-    cases = _get_cases(cls)
+    cases = _get_cases(context)
 
     for case in cases:
         _add_constructor_for_case(context, case, selfType=instanceType)
@@ -78,21 +117,32 @@ def _transform_class(context: ClassDefContext) -> None:
 
 # Returns ADT cases which were listed as class variables (similar to
 # cls.__annotations__ at runtime).
-def _get_cases(cls: ClassDef) -> List[_CaseDef]:
-    return [
-        _Case(var)
-        for var in (cls.info[lval.name].node for statement in cls.defs.body
-                    if isinstance(statement, AssignmentStmt)
-                    for lval in statement.lvalues
-                    if isinstance(lval, NameExpr)) if isinstance(var, Var)
-    ]
+def _get_cases(context: ClassDefContext) -> List[_CaseDef]:
+    cls = context.cls
+
+    classVars = (var for var in (cls.info[lval.name].node
+                                 for statement in cls.defs.body
+                                 if isinstance(statement, AssignmentStmt)
+                                 for lval in statement.lvalues
+                                 if isinstance(lval, NameExpr))
+                 if isinstance(var, Var))
+
+    caseDefs = []
+    for var in classVars:
+        assert isinstance(var.type, mypy.types.Instance)
+        assert re.match(r'^adt.case.Case(T)?$', var.type.type.defn.fullname)
+
+        caseDefs.append(
+            _CaseDef(context=context, name=var.name(), types=var.type.args))
+
+    return caseDefs
 
 
 # Class constructor method per case (uppercase)
 def _add_constructor_for_case(context: ClassDefContext, case: _CaseDef,
                               selfType: mypy.types.Instance) -> None:
     _add_method(context,
-                name=case.name(),
+                name=case.name,
                 args=case.constructor_args(),
                 return_type=selfType,
                 is_classmethod=True)
@@ -101,7 +151,7 @@ def _add_constructor_for_case(context: ClassDefContext, case: _CaseDef,
 # Accessor method per case (lowercase)
 def _add_accessor_for_case(context: ClassDefContext, case: _CaseDef) -> None:
     _add_method(context,
-                name=case.name().lower(),
+                name=case.name.lower(),
                 args=[],
                 return_type=case.accessor_return())
 

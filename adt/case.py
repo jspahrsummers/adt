@@ -1,4 +1,4 @@
-from typing import Any, Callable, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Generic, Tuple, Type, TypeVar, Union
 
 _T = TypeVar('_T')
 _U = TypeVar('_U')
@@ -61,7 +61,17 @@ class CaseConstructor:
         return 'Case'
 
 
-Case = CaseConstructor()
+if TYPE_CHECKING:
+    # Simple shim to capture the type arguments for use in the mypy plugin
+    class CaseT(Generic[_T]):
+        pass
+
+    class Case(CaseT[None]):
+        def __getitem__(self, params: _T) -> CaseT[_T]:
+            pass
+else:
+    Case = CaseConstructor()
+
 # Case
 # Case[int]
 # Case[int, str]

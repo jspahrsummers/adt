@@ -67,7 +67,8 @@ if TYPE_CHECKING:
         pass
 
     class Case(CaseT[None]):
-        def __getitem__(self, params: _T) -> CaseT[_T]:
+        @classmethod
+        def __getitem__(cls, params: _T) -> CaseT[_T]:
             pass
 else:
     Case = CaseConstructor()

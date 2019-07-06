@@ -72,7 +72,7 @@ class _CaseDef:
             return self.types[0]
         else:
             return mypy.types.TupleType(
-                self.types, self.context.api.named_type('builtins.tuple'))
+                self.types, self.context.api.named_type('__builtins__.tuple'))
 
     def match_lambda(self,
                      return_type: mypy.types.Type) -> mypy.types.CallableType:

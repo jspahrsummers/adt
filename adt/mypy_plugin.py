@@ -18,10 +18,6 @@ def plugin(version: str) -> Type[Plugin]:
     return ADTPlugin
 
 
-# Used to represent ADT cases (which are defined as class variables).
-_Case = NewType('_Case', Var)
-
-
 class ADTPlugin(Plugin):
     # Fully-qualified name for @adt
     _ADT_DECORATOR = 'adt.decorator.adt'
@@ -34,6 +30,35 @@ class ADTPlugin(Plugin):
             return None
 
         return _transform_class
+
+
+class _CaseDef:
+    name: str
+    types: List[mypy.typing.Type]
+
+    def __init__(self, name: str, types: List[mypy.typing.Type]):
+        self.name = name
+        self.types = types
+        super().__init__()
+
+    def constructor_args(self) -> List[Argument]:
+        pass
+
+    def accessor_return(self) -> mypy.typing.Type:
+        pass
+
+    def match_lambda(self,
+                     return_type: mypy.types.Type) -> mypy.types.CallableType:
+        pass
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, _CaseDef):
+            return False
+
+        return self.name == other.name and self.types == other.types
 
 
 def _transform_class(context: ClassDefContext) -> None:
@@ -53,7 +78,7 @@ def _transform_class(context: ClassDefContext) -> None:
 
 # Returns ADT cases which were listed as class variables (similar to
 # cls.__annotations__ at runtime).
-def _get_cases(cls: ClassDef) -> List[_Case]:
+def _get_cases(cls: ClassDef) -> List[_CaseDef]:
     return [
         _Case(var)
         for var in (cls.info[lval.name].node for statement in cls.defs.body
@@ -64,32 +89,25 @@ def _get_cases(cls: ClassDef) -> List[_Case]:
 
 
 # Class constructor method per case (uppercase)
-def _add_constructor_for_case(context: ClassDefContext, case: _Case,
+def _add_constructor_for_case(context: ClassDefContext, case: _CaseDef,
                               selfType: mypy.types.Instance) -> None:
     _add_method(context,
                 name=case.name(),
-                args=[
-                    Argument(variable=case,
-                             type_annotation=case.type,
-                             initializer=None,
-                             kind=ARG_POS)
-                ],
+                args=case.constructor_args(),
                 return_type=selfType,
                 is_classmethod=True)
 
 
 # Accessor method per case (lowercase)
-def _add_accessor_for_case(context: ClassDefContext, case: _Case) -> None:
-    assert case.type, 'Untyped cases are not currently supported in adt.mypy_plugin'
-
+def _add_accessor_for_case(context: ClassDefContext, case: _CaseDef) -> None:
     _add_method(context,
                 name=case.name().lower(),
                 args=[],
-                return_type=case.type)
+                return_type=case.accessor_return())
 
 
 # `match` method for pattern matching (uses lowercase case names)
-def _add_match(context: ClassDefContext, cases: Iterable[_Case]) -> None:
+def _add_match(context: ClassDefContext, cases: Iterable[_CaseDef]) -> None:
     matchResultType = _add_typevar(context, '_MatchResult')
 
     caseCallables = {
@@ -100,7 +118,7 @@ def _add_match(context: ClassDefContext, cases: Iterable[_Case]) -> None:
     }
 
     matchArgs = [
-        Argument(variable=Var(case.name().lower(), callableType),
+        Argument(variable=Var(case.name.lower(), callableType),
                  type_annotation=callableType,
                  initializer=None,
                  kind=ARG_NAMED)
@@ -131,14 +149,11 @@ def _add_typevar(context: ClassDefContext,
 
 # Determines the Callable type appropriate for destructuring the ADT case
 # described by `case`.
-def _callable_type_for_adt_case(context: ClassDefContext, case: Var,
+def _callable_type_for_adt_case(context: ClassDefContext, case: _CaseDef,
                                 resultType: mypy.types.TypeVarDef
                                 ) -> mypy.types.CallableType:
-    callableType = mypy.types.CallableType(
-        [case.type or mypy.types.AnyType(mypy.types.TypeOfAny.unannotated)],
-        [ARG_POS], [None], mypy.types.TypeVarType(resultType),
-        context.api.named_type('__builtins__.function'))
-
+    callableType = case.match_lambda(
+        return_type=mypy.types.TypeVarType(resultType))
     callableType.variables = [resultType]
     return callableType
 

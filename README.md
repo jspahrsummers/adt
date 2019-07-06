@@ -15,7 +15,7 @@
     1. [Generated functionality](#generated-functionality)
     1. [Custom methods](#custom-methods)
 
-## What are algebraic data types?
+# What are algebraic data types?
 
 An [algebraic data type](https://en.wikipedia.org/wiki/Algebraic_data_type) (also known as an ADT) is a way to represent multiple variants of a single type, each of which can have some data associated with it. The idea is very similar to [tagged unions and sum types](https://en.wikipedia.org/wiki/Tagged_union), which in Python are represented as [Enums](#compared-to-enums).
 
@@ -54,7 +54,7 @@ class Either(Generic[L, R]):
     RIGHT = Case[R]
 ```
 
-### Pattern matching
+## Pattern matching
 
 Now, defining a type isn't that interesting by itself. A lot of the expressivity of ADTs arises when you [pattern match](https://en.wikipedia.org/wiki/Pattern_matching) over them (sometimes known as "destructuring").
 
@@ -87,7 +87,7 @@ result = e.match(
     divide=lambda lhs, rhs: ...)
 ```
 
-### Compared to Enums
+## Compared to Enums
 
 ADTs are somewhat similar to [`Enum`s](https://docs.python.org/3/library/enum.html) from the Python standard library (in fact, the uppercase naming convention is purposely similar).
 
@@ -107,7 +107,7 @@ However, this doesn't allow data to be associated with each of these enum values
 
 From this perspective, ADTs are like `Enum`s that can optionally have data associated with each case.
 
-### Compared to inheritance
+## Compared to inheritance
 
 Algebraic data types are a relatively recent introduction to object-oriented programming languages, for the simple reason that inheritance can replicate the same behavior.
 
@@ -165,13 +165,13 @@ else:
 
 ADTs offer a simple way to define a type which is _one of a set of possible cases_, and allowing data to be associated with each case and packed/unpacked along with it.
 
-### Examples in other programming languages
+## Examples in other programming languages
 
 Algebraic data types are very common in functional programming languages, like [Haskell](https://www.haskell.org/) or [Scala](https://www.scala-lang.org/), but they're gaining increasing acceptance in "mainstream" programming languages as well.
 
 Here are a few examples.
 
-#### [Rust](https://www.rust-lang.org/)
+### [Rust](https://www.rust-lang.org/)
 
 Rust `enum`s are actually full-fledged ADTs. Here's how an `Either` ADT could be defined:
 
@@ -182,7 +182,7 @@ enum Either<L, R> {
 }
 ```
 
-#### [Swift](https://developer.apple.com/swift/)
+### [Swift](https://developer.apple.com/swift/)
 
 [Swift enumerations](https://docs.swift.org/swift-book/LanguageGuide/Enumerations.html) are very similar to Rust's, and behave like algebraic data types through their support of "associated values."
 
@@ -193,7 +193,7 @@ enum Either<L, R> {
 }
 ```
 
-#### [TypeScript](https://en.wikipedia.org/wiki/Microsoft_TypeScript)
+### [TypeScript](https://en.wikipedia.org/wiki/Microsoft_TypeScript)
 
 [TypeScript](https://en.wikipedia.org/wiki/Microsoft_TypeScript) offers ADTs through a language feature known as ["discriminated unions"](https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions).
 
@@ -217,7 +217,7 @@ interface Circle {
 type Shape = Square | Rectangle | Circle;
 ```
 
-## Installation
+# Installation
 
 To add `adt` as a library in your Python project, simply run `pip` (or `pip3`, as it may be named on your system):
 
@@ -227,7 +227,7 @@ pip install adt
 
 This will install [the latest version from PyPI](https://pypi.org/project/adt/).
 
-### mypy plugin
+## mypy plugin
 
 The library also comes with a plugin for [mypy](http://mypy-lang.org/) that enables typechecking of `@adt` definitions. **If you are already using mypy, the plugin is required to avoid nonsensical type errors.**
 
@@ -238,7 +238,7 @@ To enable the `adt` typechecking plugin, add the following to a `mypy.ini` file 
 plugins = adt.mypy_plugin
 ```
 
-## Defining an ADT
+# Defining an ADT
 
 To begin defining your own data type, import the `@adt` decorator and `Case[…]` annotation:
 
@@ -299,7 +299,7 @@ class LinkedList(Generic[T]):
 
 See the library's [tests](tests/) for more examples of complete ADT definitions.
 
-### Generated functionality
+## Generated functionality
 
 Given an ADT defined as follows:
 
@@ -349,7 +349,7 @@ See the library's [tests](tests/) for examples of using these generated methods.
 
 `@adt` will also generate `__repr__`, `__str__`, and `__eq__` methods (only if they are not [defined already](#custom-methods)), to make ADTs convenient to use by default.
 
-### Custom methods
+## Custom methods
 
 Arbitrary methods can be defined on ADTs by simply including them in the class definition as normal.
 

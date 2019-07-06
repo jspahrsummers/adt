@@ -1,6 +1,6 @@
 import unittest
 
-from adt.decorator import adt
+from adt import Case, adt
 from tests import helpers
 from typing import Callable, Optional, TypeVar
 
@@ -13,8 +13,8 @@ def optionality(x: _T) -> Optional[_T]:
 
 @adt
 class OverriddenAccessors:
-    INTVALUE: int
-    STRVALUE: str
+    INTVALUE: Case[int]
+    STRVALUE: Case[str]
 
     @property
     def intvalue(self) -> Optional[int]:
@@ -29,8 +29,8 @@ class OverriddenAccessors:
 
 @adt
 class OverriddenMatch:
-    INTVALUE: int
-    STRVALUE: str
+    INTVALUE: Case[int]
+    STRVALUE: Case[str]
 
     def match(self, intvalue: Callable[[int], str],
               strvalue: Callable[[str], str]) -> str:

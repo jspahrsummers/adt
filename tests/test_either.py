@@ -1,7 +1,7 @@
 import unittest
 from typing import Generic, TypeVar
 
-from adt.decorator import adt
+from adt import Case, adt
 from hypothesis import given
 from hypothesis.strategies import (builds, from_type, one_of,
                                    register_type_strategy)
@@ -13,8 +13,8 @@ _R = TypeVar('_R')
 
 @adt
 class Either(Generic[_L, _R]):
-    LEFT: _L
-    RIGHT: _R
+    LEFT: Case[_L]
+    RIGHT: Case[_R]
 
 
 register_type_strategy(
@@ -60,13 +60,13 @@ class TestEither(unittest.TestCase):
 
     @given(from_type(Either))
     def test_inexhaustivePatternMatchThrows(self, e: Either[_L, _R]) -> None:
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             e.match()  # type: ignore
 
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             e.match(left=lambda x: True)  # type: ignore
 
-        with self.assertRaises((AssertionError, RuntimeError)):
+        with self.assertRaises(ValueError):
             e.match(right=lambda x: True)  # type: ignore
 
     @given(from_type(Either))

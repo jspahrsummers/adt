@@ -1,7 +1,7 @@
 import unittest
 from typing import Generic, Optional, TypeVar
 
-from adt.decorator import adt
+from adt import Case, adt
 
 _T = TypeVar('_T')
 
@@ -11,7 +11,7 @@ try:
 
     @adt
     class Invalid(Generic[_T]):
-        CASE: Optional[_T] = None
+        CASE: Case[Optional[_T]] = None
 
     invalid_defined = True
 except AttributeError as e:

@@ -12,5 +12,5 @@ hypothesis.settings.load_profile(
 any_types = one_of(integers(), text())
 
 
-def invalidPatternMatch(x: Any) -> NoReturn:
+def invalidPatternMatch(*args: Any) -> NoReturn:
     assert False, 'Pattern matching failed'

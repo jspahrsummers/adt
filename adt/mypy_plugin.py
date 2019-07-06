@@ -43,19 +43,25 @@ class _CaseDef:
                  types: List[mypy.types.Type]):
         self.context = context
         self.name = name
-        self.types = self._explode_tuple(types)
+        self.types = self._normalize_types(types)
         super().__init__()
 
     @staticmethod
-    def _explode_tuple(types: List[mypy.types.Type]) -> List[mypy.types.Type]:
+    def _normalize_types(types: List[mypy.types.Type]
+                         ) -> List[mypy.types.Type]:
         if len(types) != 1:
             return types
 
         t = types[0]
-        if not isinstance(t, mypy.types.TupleType):
-            return types
 
-        return t.items
+        # Explode tuples and replace None with an empty list if it's the only
+        # thing provided
+        if isinstance(t, mypy.types.TupleType):
+            return t.items
+        elif isinstance(t, mypy.types.NoneType):
+            return []
+        else:
+            return types
 
     def constructor_args(self) -> List[Argument]:
         return [

@@ -66,10 +66,12 @@ if TYPE_CHECKING:
     class CaseT(Generic[_T]):
         pass
 
-    class Case(CaseT[None]):
-        @classmethod
-        def __getitem__(cls, params: _T) -> CaseT[_T]:
+    class CaseMeta(type):
+        def __getitem__(self, params: _T) -> CaseT[_T]:
             pass
+
+    class Case(CaseT[None], metaclass=CaseMeta):
+        pass
 else:
     Case = CaseConstructor()
 

@@ -112,7 +112,7 @@ def _transform_class(context: ClassDefContext) -> None:
     instanceType = fill_typevars(cls.info)
     assert isinstance(instanceType, mypy.types.Instance)
 
-    cases = _get_cases(context)
+    cases = _get_and_delete_cases(context)
 
     for case in cases:
         _add_constructor_for_case(context, case, selfType=instanceType)
@@ -122,24 +122,36 @@ def _transform_class(context: ClassDefContext) -> None:
 
 
 # Returns ADT cases which were listed as class variables (similar to
-# cls.__annotations__ at runtime).
-def _get_cases(context: ClassDefContext) -> List[_CaseDef]:
+# cls.__annotations__ at runtime), and removes those variables from
+# typechecking, as they will be replaced by constructor methods.
+def _get_and_delete_cases(context: ClassDefContext) -> List[_CaseDef]:
     cls = context.cls
 
-    classVars = (var for var in (cls.info[lval.name].node
-                                 for statement in cls.defs.body
-                                 if isinstance(statement, AssignmentStmt)
-                                 for lval in statement.lvalues
-                                 if isinstance(lval, NameExpr))
-                 if isinstance(var, Var))
+    caseDefs: List[_CaseDef] = []
+    removed: List[int] = []
+    for i, statement in enumerate(cls.defs.body):
+        if not isinstance(statement, AssignmentStmt):
+            continue
 
-    caseDefs = []
-    for var in classVars:
-        assert isinstance(var.type, mypy.types.Instance)
-        assert re.match(r'^adt.case.Case(T)?$', var.type.type.defn.fullname)
+        for lval in statement.lvalues:
+            if not isinstance(lval, NameExpr):
+                continue
 
-        caseDefs.append(
-            _CaseDef(context=context, name=var.name(), types=var.type.args))
+            var = cls.info[lval.name].node
+            if not isinstance(var, Var):
+                continue
+
+            assert isinstance(var.type, mypy.types.Instance)
+            assert re.match(r'^adt.case.Case(T)?$',
+                            var.type.type.defn.fullname)
+
+            caseDefs.append(
+                _CaseDef(context=context, name=var.name(),
+                         types=var.type.args))
+            removed.append(i)
+
+    for i in reversed(removed):
+        del cls.defs.body[i]
 
     return caseDefs
 

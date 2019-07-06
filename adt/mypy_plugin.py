@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, Iterable, List, NewType, Optional, Type
 
 import mypy.types
 from mypy.nodes import (ARG_NAMED, ARG_POS, MDEF, Argument, AssignmentStmt,
@@ -18,6 +18,10 @@ def plugin(version: str) -> Type[Plugin]:
     return ADTPlugin
 
 
+# Used to represent ADT cases (which are defined as class variables).
+_Case = NewType('_Case', Var)
+
+
 class ADTPlugin(Plugin):
     # Fully-qualified name for @adt
     _ADT_DECORATOR = 'adt.decorator.adt'
@@ -34,34 +38,58 @@ class ADTPlugin(Plugin):
 
 def _transform_class(context: ClassDefContext) -> None:
     cls = context.cls
-    typeInfo = cls.info
 
-    instanceType = fill_typevars(typeInfo)
+    instanceType = fill_typevars(cls.info)
     assert isinstance(instanceType, mypy.types.Instance)
 
-    cases = _get_class_vars(cls)
+    cases = _get_cases(cls)
 
     for case in cases:
-        assert case.type, 'Untyped cases are not currently supported in adt.mypy_plugin'
+        _add_constructor_for_case(context, case, selfType=instanceType)
+        _add_accessor_for_case(context, case)
 
-        # Constructor method
-        _add_method(context,
-                    name=case.name(),
-                    args=[
-                        Argument(variable=case,
-                                 type_annotation=case.type,
-                                 initializer=None,
-                                 kind=ARG_POS)
-                    ],
-                    return_type=instanceType,
-                    is_classmethod=True)
+    _add_match(context, cases)
 
-        # Accessor method (lowercase)
-        _add_method(context,
-                    name=case.name().lower(),
-                    args=[],
-                    return_type=case.type)
 
+# Returns ADT cases which were listed as class variables (similar to
+# cls.__annotations__ at runtime).
+def _get_cases(cls: ClassDef) -> List[_Case]:
+    return [
+        _Case(var)
+        for var in (cls.info[lval.name].node for statement in cls.defs.body
+                    if isinstance(statement, AssignmentStmt)
+                    for lval in statement.lvalues
+                    if isinstance(lval, NameExpr)) if isinstance(var, Var)
+    ]
+
+
+# Class constructor method per case (uppercase)
+def _add_constructor_for_case(context: ClassDefContext, case: _Case,
+                              selfType: mypy.types.Instance) -> None:
+    _add_method(context,
+                name=case.name(),
+                args=[
+                    Argument(variable=case,
+                             type_annotation=case.type,
+                             initializer=None,
+                             kind=ARG_POS)
+                ],
+                return_type=selfType,
+                is_classmethod=True)
+
+
+# Accessor method per case (lowercase)
+def _add_accessor_for_case(context: ClassDefContext, case: _Case) -> None:
+    assert case.type, 'Untyped cases are not currently supported in adt.mypy_plugin'
+
+    _add_method(context,
+                name=case.name().lower(),
+                args=[],
+                return_type=case.type)
+
+
+# `match` method for pattern matching (uses lowercase case names)
+def _add_match(context: ClassDefContext, cases: Iterable[_Case]) -> None:
     matchResultType = _add_typevar(context, '_MatchResult')
 
     caseCallables = {
@@ -71,7 +99,6 @@ def _transform_class(context: ClassDefContext) -> None:
         for case in cases
     }
 
-    # `match` method for pattern matching (uses lowercase case names)
     matchArgs = [
         Argument(variable=Var(case.name().lower(), callableType),
                  type_annotation=callableType,
@@ -85,17 +112,6 @@ def _transform_class(context: ClassDefContext) -> None:
                 args=matchArgs,
                 return_type=mypy.types.TypeVarType(matchResultType),
                 tvar_def=matchResultType)
-
-
-# Returns typed class variables (similar to cls.__annotations__ at runtime).
-def _get_class_vars(cls: ClassDef) -> List[Var]:
-    return [
-        node
-        for node in (cls.info[lval.name].node for statement in cls.defs.body
-                     if isinstance(statement, AssignmentStmt)
-                     for lval in statement.lvalues
-                     if isinstance(lval, NameExpr)) if isinstance(node, Var)
-    ]
 
 
 # Generates a new, unique, unbounded type variable and defines it within the

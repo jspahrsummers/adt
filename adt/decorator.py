@@ -2,7 +2,7 @@ from copy import copy
 from enum import Enum
 from typing import Any, Callable, Type, TypeVar, no_type_check
 
-from .case import CaseConstructor
+from adt.case import CaseConstructor
 
 
 @no_type_check

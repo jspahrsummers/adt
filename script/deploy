@@ -3,8 +3,6 @@
 set -o errexit
 set -o pipefail
 
-PROJECT_NAME=$(basename "$PWD")
-
 echo " => Creating Python virtual environment"
 python3 -m venv venv
 
@@ -23,4 +21,4 @@ python setup.py sdist bdist_wheel -d "$DEST_DIR"
 echo
 echo " => Uploading package"
 pushd "$DEST_DIR"
-twine upload "$PROJECT_NAME"-*
+twine upload pyadt-*

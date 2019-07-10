@@ -21,4 +21,4 @@ python setup.py sdist bdist_wheel -d "$DEST_DIR"
 echo
 echo " => Uploading package"
 pushd "$DEST_DIR"
-twine upload pyadt-*
+twine upload algebraic_data_types-*

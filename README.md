@@ -222,10 +222,10 @@ type Shape = Square | Rectangle | Circle;
 To add `adt` as a library in your Python project, simply run `pip` (or `pip3`, as it may be named on your system):
 
 ```
-pip install adt
+pip install algebraic-data-types
 ```
 
-This will install [the latest version from PyPI](https://pypi.org/project/adt/).
+This will install [the latest version from PyPI](https://pypi.org/project/algebraic-data-types/).
 
 ## mypy plugin
 

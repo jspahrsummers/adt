@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setup(name='pyadt',
+setup(name='algebraic-data-types',
       version='0.1.0',
       author='Justin Spahr-Summers',
       author_email='justin@jspahrsummers.com',

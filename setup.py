@@ -13,6 +13,7 @@ setup(name='algebraic-data-types',
       license='MIT',
       url='https://github.com/jspahrsummers/adt',
       packages=find_packages(),
+      package_data = {'adt': ['py.typed']},
       classifiers=[
           "Development Status :: 3 - Alpha",
           "Intended Audience :: Developers",

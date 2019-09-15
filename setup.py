@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name='algebraic-data-types',
-      version='0.1.0',
+      version='0.1.1',
       author='Justin Spahr-Summers',
       author_email='justin@jspahrsummers.com',
       description='Algebraic data types for Python',
@@ -13,7 +13,7 @@ setup(name='algebraic-data-types',
       license='MIT',
       url='https://github.com/jspahrsummers/adt',
       packages=find_packages(),
-      package_data = {'adt': ['py.typed']},
+      package_data={'adt': ['py.typed']},
       classifiers=[
           "Development Status :: 3 - Alpha",
           "Intended Audience :: Developers",

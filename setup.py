@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name='algebraic-data-types',
-      version='0.1.1',
+      version='0.1.2',
       author='Justin Spahr-Summers',
       author_email='justin@jspahrsummers.com',
       description='Algebraic data types for Python',

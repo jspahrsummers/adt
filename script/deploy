@@ -13,12 +13,11 @@ echo
 echo " => Installing distribution tools"
 pip install -q -U wheel twine
 
+DEST_DIR="$(mktemp -d)/dist"
 echo
-echo " => Creating distribution"
-DEST_DIR=$(mktemp -d)
-python setup.py sdist bdist_wheel -d "$DEST_DIR"
+echo " => Creating distribution in $DEST_DIR"
+python setup.py sdist -d "$DEST_DIR" bdist_wheel -d "$DEST_DIR"
 
 echo
 echo " => Uploading package"
-pushd "$DEST_DIR"
-twine upload algebraic_data_types-*
+twine upload "$DEST_DIR/*"

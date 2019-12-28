@@ -1,5 +1,5 @@
 yapf==0.27.0
-mypy==0.711
+mypy>=0.711, <=0.761
 coverage==4.5.3
 hypothesis==4.24.5
 coveralls==1.8.1

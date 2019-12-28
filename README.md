@@ -62,11 +62,12 @@ For example, we could use the `Either` ADT from above to implement a sort of err
 
 ```python
 # Defined in some other module, perhaps
-def some_operation() -> Either[Exception, int]
+def some_operation() -> Either[Exception, int]:
+    return Either.RIGHT(22)  # Example of building a constructor
 
 # Run some_operation, and handle the success or failure
 default_value = 5
-return some_operation().match(
+unpacked_result = some_operation().match(
     # In this case, we're going to ignore any exception we receive
     left=lambda ex: default_value,
     right=lambda result: result)
@@ -77,14 +78,14 @@ _Aside: this is very similar to how error handling is implemented in languages l
 One can do the same thing with the `Expression` type above (just more cases to match):
 
 ```python
-e: Expression
-result = e.match(
-    literal=lambda n: ...,
-    unary_minus=lambda expr: ...,
-    add=lambda lhs, rhs: ...,
-    minus=lambda lhs, rhs: ...,
-    multiply=lambda lhs, rhs: ...,
-    divide=lambda lhs, rhs: ...)
+def handle_expression(e: Expression):
+    return e.match(
+        literal=lambda n: ...,
+        unary_minus=lambda expr: ...,
+        add=lambda lhs, rhs: ...,
+        minus=lambda lhs, rhs: ...,
+        multiply=lambda lhs, rhs: ...,
+        divide=lambda lhs, rhs: ...)
 ```
 
 ## Compared to Enums
@@ -94,7 +95,8 @@ ADTs are somewhat similar to [`Enum`s](https://docs.python.org/3/library/enum.ht
 For example, an `Enum` version of `Expression` might look like:
 
 ```python
-class Expression(Enum):
+from enum import Enum, auto
+class EnumExpression(Enum):
     LITERAL = auto()
     UNARY_MINUS = auto()
     ADD = auto()
@@ -114,51 +116,52 @@ Algebraic data types are a relatively recent introduction to object-oriented pro
 Continuing our examples with the `Expression` ADT, here's how one might represent it with inheritance in Python:
 
 ```python
-class Expression(ABC):
+from abc import ABC
+class ABCExpression(ABC):
     pass
 
-class LiteralExpression(Expression):
+class LiteralExpression(ABCExpression):
     def __init__(self, value: float):
         pass
 
-class UnaryMinusExpression(Expression):
-    def __init__(self, inner: Expression):
+class UnaryMinusExpression(ABCExpression):
+    def __init__(self, inner: ABCExpression):
         pass
 
-class AddExpression(Expression):
-    def __init__(self, lhs: Expression, rhs: Expression):
+class AddExpression(ABCExpression):
+    def __init__(self, lhs: ABCExpression, rhs: ABCExpression):
         pass
 
-class MinusExpression(Expression):
-    def __init__(self, lhs: Expression, rhs: Expression):
+class MinusExpression(ABCExpression):
+    def __init__(self, lhs: ABCExpression, rhs: ABCExpression):
         pass
 
-class MultiplyExpression(Expression):
-    def __init__(self, lhs: Expression, rhs: Expression):
+class MultiplyExpression(ABCExpression):
+    def __init__(self, lhs: ABCExpression, rhs: ABCExpression):
         pass
 
-class DivideExpression(Expression):
-    def __init__(self, lhs: Expression, rhs: Expression):
+class DivideExpression(ABCExpression):
+    def __init__(self, lhs: ABCExpression, rhs: ABCExpression):
         pass
 ```
 
 This is noticeably more verbose, and the code to consume these types gets much more complex as well:
 
 ```python
-e: Expression
+e: ABCExpression = UnaryMinusExpression(LiteralExpression(3))  # Example of creating an expression
 
 if isinstance(e, LiteralExpression):
-    result = # do something with e.value
+    result = ... # do something with e.value
 elif isinstance(e, UnaryMinusExpression):
-    result = # do something with e.inner
+    result = ... # do something with e.inner
 elif isinstance(e, AddExpression):
-    result = # do something with e.lhs and e.rhs
+    result = ... # do something with e.lhs and e.rhs
 elif isinstance(e, MinusExpression):
-    result = # do something with e.lhs and e.rhs
+    result = ... # do something with e.lhs and e.rhs
 elif isinstance(e, MultiplyExpression):
-    result = # do something with e.lhs and e.rhs
+    result = ... # do something with e.lhs and e.rhs
 elif isinstance(e, DivideExpression):
-    result = # do something with e.lhs and e.rhs
+    result = ... # do something with e.lhs and e.rhs
 else:
     raise ValueError(f'Unexpected type of expression: {e}')
 ```
@@ -242,6 +245,7 @@ plugins = adt.mypy_plugin
 
 To begin defining your own data type, import the `@adt` decorator and `Case[…]` annotation:
 
+[//]: # (README_TEST:AT_TOP)
 ```python
 from adt import adt, Case
 ```
@@ -250,7 +254,7 @@ Then, define a new Python class, upon which you apply the `@adt` decorator:
 
 ```python
 @adt
-class MyADT:
+class MyADT1:
     pass
 ```
 
@@ -258,7 +262,7 @@ For each case (variant) that your ADT will have, declare a field with the `Case`
 
 ```python
 @adt
-class MyADT:
+class MyADT2:
     FIRST_CASE: Case
     SECOND_CASE: Case
 ```
@@ -267,7 +271,7 @@ If you want to associate some data with a particular case, list the type of that
 
 ```python
 @adt
-class MyADT:
+class MyADT3:
     FIRST_CASE: Case
     SECOND_CASE: Case
     STRING_CASE: Case[str]
@@ -277,7 +281,7 @@ You can build cases with arbitrarily many associated pieces of data, as long as 
 
 ```python
 @adt
-class MyADT:
+class MyADT4:
     FIRST_CASE: Case
     SECOND_CASE: Case
     STRING_CASE: Case[str]
@@ -305,7 +309,7 @@ Given an ADT defined as follows:
 
 ```python
 @adt
-class ExampleADT:
+class MyADT5:
     EMPTY: Case
     INTEGER: Case[int]
     STRING_PAIR: Case[str, str]
@@ -318,16 +322,17 @@ The `@adt` decorator will automatically generate accessor methods of the followi
         return None
 
     def integer(self) -> int:
-        # unpacks int value and returns it
+        ... # unpacks int value and returns it
 
     def string_pair(self) -> Tuple[str, str]:
-        # unpacks strings and returns them in a tuple
+        ... # unpacks strings and returns them in a tuple
 ```
 
 These accessors can be used to obtain the data associated with the ADT case, but **accessors will throw an exception if the ADT was not constructed with the matching case**. This is a shorthand when you already know the case of an ADT object.
 
 `@adt` will also automatically generate a pattern-matching method, which can be used when you _don't_ know which case you have ahead of time:
 
+[//]: # (README_TEST:IGNORE)
 ```python
     Result = TypeVar('Result')
     

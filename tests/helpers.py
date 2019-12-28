@@ -14,3 +14,6 @@ any_types = one_of(integers(), text())
 
 def invalidPatternMatch(*args: Any) -> NoReturn:
     assert False, 'Pattern matching failed'
+
+
+PATH_TO_TEST_BASE_DIRECTORY = os.path.dirname(__file__)

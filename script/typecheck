@@ -8,4 +8,6 @@ PROJECT_NAME=$(basename "$PWD")
 # shellcheck disable=SC1091
 . venv/bin/activate
 
-mypy --strict --ignore-missing-imports --implicit-reexport "$@" -p "$PROJECT_NAME" -p tests
+mypy --strict --ignore-missing-imports --implicit-reexport "$@" -p "$PROJECT_NAME"
+# Do not type-check files contained in tests/source_files
+mypy --strict --ignore-missing-imports --implicit-reexport --follow-imports silent "$@" tests/test_*.py

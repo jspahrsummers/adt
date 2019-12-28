@@ -50,8 +50,8 @@ R = TypeVar('R')
 
 @adt
 class Either(Generic[L, R]):
-    LEFT = Case[L]
-    RIGHT = Case[R]
+    LEFT: Case[L]
+    RIGHT: Case[R]
 ```
 
 ## Pattern matching
@@ -366,7 +366,7 @@ class ExampleADT:
     def safe_integer(self) -> Optional[int]:
         return self.match(empty=lambda: None,
                           integer=lambda n: n,
-                          string_pair=lambda _, _: None)
+                          string_pair=lambda _a, _b: None)
 
     @property
     def safe_string_pair(self) -> Optional[Tuple[str, str]]:

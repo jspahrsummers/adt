@@ -1,14 +1,13 @@
 import itertools
 import re
 from decimal import Decimal
-from typing import Any, Callable, Dict, Iterable, List, NewType, Optional, Type
+from typing import Any, Callable, Iterable, List, Optional, Type
 
 import mypy.types
 from mypy.nodes import (ARG_NAMED, ARG_POS, MDEF, Argument, AssignmentStmt,
-                        Block, ClassDef, Decorator, FuncDef, NameExpr,
-                        PassStmt, SymbolTableNode, TypeInfo, TypeVarExpr, Var)
+                        Block, FuncDef, NameExpr, PassStmt, SymbolTableNode,
+                        TypeVarExpr, Var)
 from mypy.plugin import ClassDefContext, Plugin
-from mypy.plugins.common import add_method
 from mypy.semanal import set_callable_name
 from mypy.typevars import fill_typevars
 from mypy.util import get_unique_redefinition_name

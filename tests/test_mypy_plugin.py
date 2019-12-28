@@ -7,24 +7,6 @@ import io
 from typing import List, Optional
 
 
-class SimpleBuffer(io.TextIOBase):
-    """Simple memory buffer that behaves like a file"""
-
-    def __init__(self) -> None:
-        self.__buffer: List[str] = []
-
-    def write(self, text: str) -> int:
-        self.__buffer.append(text)
-        print(text, end="")
-        return len(text)
-
-    def read(self, size: Optional[int] = None) -> str:
-        return ''.join(self.__buffer)
-
-    def __str__(self) -> str:
-        return self.read()
-
-
 class TestMyPyPlugin(unittest.TestCase):
     def test_issue21(self) -> None:
         self._call_mypy_on_source_file("issue21.py")
@@ -54,9 +36,7 @@ class TestMyPyPlugin(unittest.TestCase):
                          source_file_name))
 
     def _call_mypy_on_path(self, testfile: str) -> None:
-        output = SimpleBuffer()
         try:
-            mypy.main.main(  # type: ignore
-                None, output, sys.stderr, args=[testfile])
+            mypy.main.main(None, sys.stdout, sys.stderr, args=[testfile])
         except SystemExit:
-            self.fail(msg="Error during type-check:\n{}".format(output))
+            self.fail(msg="Error during type-check")

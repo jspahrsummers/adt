@@ -1,3 +1,4 @@
+# mypy: no-warn-unused-ignores
 from enum import Enum
 from typing import Any, Callable, Type, TypeVar, no_type_check
 
@@ -23,7 +24,8 @@ def adt(cls):
                 f'Annotation {k} should be a Case[…] constructor, got {constructor!r} instead'
             )
 
-    cls._Key = Enum('_Key', list(caseConstructors.keys()))
+    cls._Key = Enum(  # type: ignore
+        '_Key', list(caseConstructors.keys()))
 
     _installInit(cls)
     _installRepr(cls)

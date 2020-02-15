@@ -29,7 +29,7 @@ def adt(cls):
 
     values = list(caseConstructors.values())
     types = []
-    for i in range(len(caseConstructors.values())):
+    for i in range(len(values)):
         try:
             types.append(values[i]._argType)
         except AttributeError:

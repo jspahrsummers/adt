@@ -27,17 +27,7 @@ def adt(cls):
     cls._Key = Enum(  # type: ignore
         '_Key', list(caseConstructors.keys()))
 
-    values = list(caseConstructors.values())
-    types = []
-    for i in range(len(values)):
-        try:
-            types.append(values[i]._argType)
-        except AttributeError:
-            try:
-                types.append(values[i]._types)
-            except AttributeError:
-                types.append(None)
-    cls._types = types
+    cls._types = list(x.getTypes() for x in list(caseConstructors.values()))
 
     _installInit(cls)
     _installRepr(cls)

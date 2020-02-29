@@ -18,6 +18,9 @@ class TupleConstructor:
         assert len(value) == len(self._types)
         return callback(*value)
 
+    def getTypes(self) -> Any:
+        return self._types
+
     def __repr__(self) -> str:
         typeString = ', '.join((str(t) for t in self._types))
         return f'Case[{typeString}]'
@@ -34,6 +37,9 @@ class IdentityConstructor:
     def deconstructCase(self, value: _T, callback: Callable[[_T], _U]) -> _U:
         return callback(value)
 
+    def getTypes(self) -> Any:
+        return self._argType
+
     def __repr__(self) -> str:
         return f'Case[{self._argType}]'
 
@@ -47,6 +53,9 @@ class CaseConstructor:
 
     def deconstructCase(self, value: None, callback: Callable[[], _T]) -> _T:
         return callback()
+
+    def getTypes(self) -> None:
+        return None
 
     def __getitem__(self, params: Union[None, Type[Any], Tuple[Type[Any], ...]]
                     ) -> AnyConstructor:

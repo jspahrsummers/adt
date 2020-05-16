@@ -2,7 +2,7 @@
 import sys
 import inspect
 from enum import Enum
-from typing import Any, Callable, Type, TypeVar, no_type_check
+from typing import Any, Callable, Type, TypeVar, no_type_check, Iterable
 
 from adt.case import CaseConstructor
 
@@ -39,13 +39,12 @@ def adt(cls):
 
     for caseKey in cls._Key.__members__.values():
         _installOneConstructor(cls, caseKey)
-        # _installOneAccessor(cls, caseKey)
 
     _installMatch(cls, cls._Key)
     return cls
 
 
-def _installInit(cls: Any, caseKeys) -> None:
+def _installInit(cls: Any, caseKeys: Iterable[Enum]) -> None:
     def _init(self: Any,
               key: Enum,
               value: Any,
@@ -59,6 +58,7 @@ def _installInit(cls: Any, caseKeys) -> None:
         orig_init(self)
 
     cls.__init__ = _init
+
 
 def _installRepr(cls: Any) -> None:
     def _repr(self: Any) -> str:
@@ -113,25 +113,26 @@ class Accessor:
         self.adt = adt
         self.case = case
 
-    def __call__(self, ):
+    def __call__(self) -> Any:
         if self.adt._key != self.case:
             raise AttributeError(
                 f'{self.adt} was constructed as case {self.adt._key.name}, so {self.case.name.lower()} is not accessible'
             )
         return self.adt._value
 
-    def trace(self, frame, event, arg):
+    def trace(self, frame, event, arg) -> None:
         raise self.SkipCase()
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         if self.adt._key != self.case:
             sys.settrace(lambda *args, **keys: None)
-            frame = inspect.currentframe().f_back
-            frame.f_trace = self.trace
+            frame = inspect.currentframe()
+            if frame:
+                frame.f_back.f_trace = self.trace
         else:
             return self.adt._value
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: Any):
         if self.SkipCase is exc_type:
             return True
 

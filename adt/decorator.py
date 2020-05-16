@@ -127,7 +127,7 @@ class Accessor:
         if self.adt._key != self.case:
             sys.settrace(lambda *args, **keys: None)
             frame = inspect.currentframe().f_back
-            frame.f_trace = self.trace
+            setattr(frame, "f_trace", self.trace)
         else:
             return self.adt._value
 

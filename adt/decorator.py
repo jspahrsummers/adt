@@ -2,7 +2,7 @@
 import sys
 import inspect
 from enum import Enum
-from typing import Any, Callable, Type, TypeVar, no_type_check, Iterable
+from typing import Any, Callable, Type, TypeVar, no_type_check, Iterable, Optional
 
 from adt.case import CaseConstructor
 
@@ -126,13 +126,12 @@ class Accessor:
     def __enter__(self) -> Any:
         if self.adt._key != self.case:
             sys.settrace(lambda *args, **keys: None)
-            frame = inspect.currentframe()
-            if frame:
-                frame.f_back.f_trace = self.trace
+            frame = inspect.currentframe().f_back
+            frame.f_trace = self.trace
         else:
             return self.adt._value
 
-    def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: Any):
+    def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: Any) -> Optional[bool]:
         if self.SkipCase is exc_type:
             return True
 

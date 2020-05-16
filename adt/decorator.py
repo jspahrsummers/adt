@@ -1,4 +1,6 @@
 # mypy: no-warn-unused-ignores
+import sys
+import inspect
 from enum import Enum
 from typing import Any, Callable, Type, TypeVar, no_type_check
 
@@ -29,30 +31,34 @@ def adt(cls):
 
     cls._types = list(x.getTypes() for x in list(caseConstructors.values()))
 
-    _installInit(cls)
+    caseKeys = cls._Key.__members__.values()
+    _installInit(cls, caseKeys)
     _installRepr(cls)
     _installStr(cls)
     _installEq(cls)
 
     for caseKey in cls._Key.__members__.values():
         _installOneConstructor(cls, caseKey)
-        _installOneAccessor(cls, caseKey)
+        # _installOneAccessor(cls, caseKey)
 
     _installMatch(cls, cls._Key)
     return cls
 
 
-def _installInit(cls: Any) -> None:
+def _installInit(cls: Any, caseKeys) -> None:
     def _init(self: Any,
               key: Enum,
               value: Any,
               orig_init: Callable[[Any], None] = cls.__init__) -> None:
         self._key = key
         self._value = value
+
+        for caseKey in caseKeys:
+            _installOneAccessor(self, caseKey)
+
         orig_init(self)
 
     cls.__init__ = _init
-
 
 def _installRepr(cls: Any) -> None:
     def _repr(self: Any) -> str:
@@ -99,18 +105,41 @@ def _installOneConstructor(cls: Any, case: Enum) -> None:
     setattr(cls, case.name, classmethod(constructor))
 
 
-def _installOneAccessor(cls: Any, case: Enum) -> None:
-    def accessor(self: Any, _case: Enum = case) -> Any:
-        if self._key != _case:
+class Accessor:
+    class SkipCase(Exception):
+        pass
+
+    def __init__(self, adt: Any, case: Enum):
+        self.adt = adt
+        self.case = case
+
+    def __call__(self, ):
+        if self.adt._key != self.case:
             raise AttributeError(
-                f'{self} was constructed as case {self._key.name}, so {_case.name.lower()} is not accessible'
+                f'{self.adt} was constructed as case {self.adt._key.name}, so {self.case.name.lower()} is not accessible'
             )
+        return self.adt._value
 
-        return self._value
+    def trace(self, frame, event, arg):
+        raise self.SkipCase()
 
+    def __enter__(self):
+        if self.adt._key != self.case:
+            sys.settrace(lambda *args, **keys: None)
+            frame = inspect.currentframe().f_back
+            frame.f_trace = self.trace
+        else:
+            return self.adt._value
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.SkipCase is exc_type:
+            return True
+
+
+def _installOneAccessor(instance: Any, case: Enum) -> None:
     accessorName = case.name.lower()
-    if accessorName not in cls.__dict__:
-        setattr(cls, accessorName, accessor)
+    if accessorName not in instance.__class__.__dict__:
+        setattr(instance, accessorName, Accessor(instance, case))
 
 
 _MatchResult = TypeVar('_MatchResult')

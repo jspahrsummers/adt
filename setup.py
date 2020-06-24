@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -12,7 +12,7 @@ setup(name='algebraic-data-types',
       long_description_content_type='text/markdown',
       license='MIT',
       url='https://github.com/jspahrsummers/adt',
-      packages=find_packages(),
+      packages=['adt'],
       package_data={'adt': ['py.typed']},
       classifiers=[
           "Development Status :: 3 - Alpha",

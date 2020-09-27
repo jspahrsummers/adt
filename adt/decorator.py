@@ -2,6 +2,7 @@
 import sys
 import inspect
 from enum import Enum
+from types import FrameType
 from typing import Any, Callable, Type, TypeVar, no_type_check, Iterable, Optional
 
 from adt.case import CaseConstructor
@@ -105,6 +106,9 @@ def _installOneConstructor(cls: Any, case: Enum) -> None:
     setattr(cls, case.name, classmethod(constructor))
 
 
+TraceFunction = Callable[[FrameType, str, Any], Any]
+
+
 class Accessor:
     class SkipCase(Exception):
         pass
@@ -112,6 +116,7 @@ class Accessor:
     def __init__(self, adt: Any, case: Enum):
         self.adt = adt
         self.case = case
+        self.original_system_trace_function: Optional[TraceFunction] = None
 
     def __call__(self) -> Any:
         if self.adt._key != self.case:
@@ -120,11 +125,12 @@ class Accessor:
             )
         return self.adt._value
 
-    def trace(self, frame, event, arg) -> None:
+    def trace(self, frame: FrameType, event: str, arg: Any) -> Any:
         raise self.SkipCase()
 
     def __enter__(self) -> Any:
         if self.adt._key != self.case:
+            self.original_system_trace_function = sys.gettrace()
             sys.settrace(lambda *args, **keys: None)
             frame = inspect.currentframe()
             if frame:
@@ -132,11 +138,15 @@ class Accessor:
         else:
             return self.adt._value
 
-    def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: Any) -> Optional[bool]:
+    def __exit__(self, exc_type: type, exc_val: Exception,
+                 exc_tb: Any) -> Optional[bool]:
         if self.SkipCase is exc_type:
+            if self.original_system_trace_function:
+                sys.settrace(self.original_system_trace_function)
+                self.original_system_trace_function = None
             return True
         else:
-            return
+            return None
 
 
 def _installOneAccessor(instance: Any, case: Enum) -> None:

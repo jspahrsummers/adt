@@ -11,7 +11,7 @@ class ContextMatching:
 
 
 class TestContextManagerAccessors(unittest.TestCase):
-    def test_empty(self):
+    def test_empty(self) -> None:
         foo = ContextMatching.EMPTY()
 
         with foo.empty:
@@ -23,7 +23,7 @@ class TestContextManagerAccessors(unittest.TestCase):
         with foo.strings:
             self.assertTrue(False)
 
-    def test_integer(self):
+    def test_integer(self) -> None:
         foo = ContextMatching.INTEGER(1)
 
         with foo.empty:
@@ -35,7 +35,7 @@ class TestContextManagerAccessors(unittest.TestCase):
         with foo.strings:
             self.assertTrue(False)
 
-    def test_strings(self):
+    def test_strings(self) -> None:
         foo = ContextMatching.STRINGS("aaa", "bbb")
 
         with foo.empty:

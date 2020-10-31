@@ -1,7 +1,7 @@
 # mypy: no-warn-redundant-casts
 import itertools
 from decimal import Decimal
-from typing import Optional, Callable, List, Type, Any, Iterable, Union
+from typing import Optional, Callable, List, Type, Any, Iterable, Union, TypeVar
 import typing
 
 import mypy.types
@@ -22,6 +22,7 @@ from mypy.nodes import (
     SymbolNode,
     TypeVarExpr,
     Var,
+    JsonDict
 )
 from mypy.plugin import AnalyzeTypeContext, TypeAnalyzerPluginInterface, ClassDefContext, Plugin
 from mypy.semanal import set_callable_name
@@ -263,10 +264,9 @@ def _add_constructor_for_case(context: ClassDefContext, case: _CaseDef,
 
 # Accessor method per case (lowercase)
 def _add_accessor_for_case(context: ClassDefContext, case: _CaseDef) -> None:
-    _add_method(context,
-                name=case.name.lower(),
-                args=[],
-                return_type=case.accessor_return())
+    _add_accessor(context,
+                  name=case.name.lower(),
+                  return_type=case.accessor_return())
 
 
 # `match` method for pattern matching (uses lowercase case names)
@@ -389,3 +389,55 @@ def _add_method(
 
     info.defn.defs.body.append(func)
     info.names[name] = SymbolTableNode(MDEF, func, plugin_generated=True)
+
+
+from typing import ContextManager, Type
+
+
+def _add_accessor(
+        ctx: ClassDefContext,
+        name: str,
+        return_type: mypy.types.Type) -> None:
+    info = ctx.cls.info
+
+    # First remove any previously generated methods with the same name
+    # to avoid clashes and problems in new semantic analyzer.
+    if name in info.names:
+        sym = info.names[name]
+        if sym.plugin_generated and isinstance(sym.node, FuncDef):
+            ctx.cls.defs.body.remove(sym.node)
+
+    self_type = fill_typevars(info)
+    first = Argument(Var('self'), self_type, None, ARG_POS)
+
+    function_type = ctx.api.named_type('__builtins__.function')
+
+    assert first.type_annotation, 'All arguments must be fully typed.'
+    arg_types = [first.type_annotation]
+    arg_kinds = [first.kind]
+    arg_names = [get_name(first.variable)]
+
+    signature = mypy.types.CallableType(arg_types, arg_kinds, arg_names,
+                                        return_type, function_type)
+
+    func = FuncDef(name, [first], Block([PassStmt()]))
+    func.info = info
+    func.is_class = False
+    func.type = set_callable_name(signature, func)
+    func._fullname = get_fullname(info) + '.' + name
+    func.line = info.line
+
+    # NOTE: we would like the plugin generated node to dominate, but we still
+    # need to keep any existing definitions so they get semantically analyzed.
+    if name in info.names:
+        # Get a nice unique name instead.
+        r_name = get_unique_redefinition_name(name, info.names)
+        info.names[r_name] = info.names[name]
+
+    v_name = get_unique_redefinition_name(name, info.names)
+
+    info.names[v_name] = SymbolTableNode(MDEF, Var(name, None), plugin_generated=True)
+
+    info.defn.defs.body.append(func)
+    info.names[name] = SymbolTableNode(MDEF, func, plugin_generated=True)
+

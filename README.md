@@ -2,7 +2,7 @@
 
 `adt` is a library providing [algebraic data types](https://en.wikipedia.org/wiki/Algebraic_data_type) in Python, with a clean, intuitive syntax, and support for [`typing`](https://docs.python.org/3/library/typing.html) through a [mypy plugin](#mypy-plugin).
 
-**NOTE:** This project is experimental, and not actively maintained by the author. Contributions and forking are more than welcome.
+_**NOTE:** This project is experimental, and not actively maintained by the author. Contributions and forking are more than welcome._
 
 **Table of contents:**
 

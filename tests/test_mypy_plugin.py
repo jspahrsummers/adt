@@ -11,21 +11,17 @@ from tests.test_readme import extract_code_from_readme
 
 class TestMyPyPlugin(unittest.TestCase):
     def test_issue21(self) -> None:
+        # cf. https://github.com/jspahrsummers/adt/issues/21
         self._call_mypy_on_source_file("issue21.py")
 
-    @unittest.expectedFailure  # Issue #25 is still unfixed
     def test_issue25(self) -> None:
-        # Activate it when working on it.
         # cf. https://github.com/jspahrsummers/adt/issues/25
         self._call_mypy_on_source_file("issue25.py")
 
-    @unittest.expectedFailure  # Issue #26 is still unfixed
     def test_issue26(self) -> None:
-        # Activate it when working on it.
         # cf. https://github.com/jspahrsummers/adt/issues/26
         self._call_mypy_on_source_file("issue26.py")
 
-    @unittest.expectedFailure  # Fails because issue #26 is still unfixed
     def test_readme_examples(self) -> None:
         readme_code = extract_code_from_readme()
 

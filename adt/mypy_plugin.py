@@ -143,7 +143,8 @@ class _CaseDef:
             return self.types[0]
         else:
             return mypy.types.TupleType(
-                self.types, self.context.api.named_type('__builtins__.tuple'))
+                list(self.types),
+                self.context.api.named_type('__builtins__.tuple'))
 
     def match_lambda(self,
                      return_type: mypy.types.Type) -> mypy.types.CallableType:
@@ -242,7 +243,7 @@ def _get_and_delete_cases(context: ClassDefContext
         caseDefs.append(
             _CaseDef(context=context,
                      name=get_name(var),
-                     types=var.type.ret_type.args))
+                     types=list(var.type.ret_type.args)))
         removed.append(i)
 
     for i in reversed(removed):

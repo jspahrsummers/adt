@@ -243,7 +243,7 @@ def _get_and_delete_cases(context: ClassDefContext
         caseDefs.append(
             _CaseDef(context=context,
                      name=get_name(var),
-                     types=var.type.ret_type.args))
+                     types=list(var.type.ret_type.args)))
         removed.append(i)
 
     for i in reversed(removed):

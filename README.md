@@ -378,8 +378,8 @@ class ExampleADT:
     @property
     def safe_string_pair(self) -> Optional[Tuple[str, str]]:
         return self.match(empty=lambda: None,
-                          integer=lambda: None,
-                          string_pair=lambda a, b: tuple(a, b))
+                          integer=lambda n: None,
+                          string_pair=lambda a, b: (a, b))
 ```
 
 However, additional fields _must not_ be added to the class, as the decorator will attempt to interpret them as ADT `Case`s (which will fail).

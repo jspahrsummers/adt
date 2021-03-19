@@ -22,7 +22,6 @@ class TestMyPyPlugin(unittest.TestCase):
         # cf. https://github.com/jspahrsummers/adt/issues/26
         self._call_mypy_on_source_file("issue26.py")
 
-    @unittest.expectedFailure  # Fails because issue #26 is still unfixed
     def test_readme_examples(self) -> None:
         readme_code = extract_code_from_readme()
 

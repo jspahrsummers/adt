@@ -33,6 +33,7 @@ def adt(cls):
     _installRepr(cls)
     _installStr(cls)
     _installEq(cls)
+    _installHash(cls)
 
     for caseKey in cls._Key.__members__.values():
         _installOneConstructor(cls, caseKey)
@@ -84,6 +85,19 @@ def _installEq(cls: Any) -> None:
 
     if '__eq__' not in cls.__dict__:
         cls.__eq__ = _eq
+
+
+def _installHash(cls: Any) -> None:
+    # It's important to capture `cls` here, instead of using type(self), to
+    # preserve covariance; i.e., if `self` and `other` are instances of
+    # different descendants of `cls`, it's irrelevant for this particular
+    # equality check and we shouldn't rule it out (that should be the job of
+    # further-derived classes' implementation of __eq__).
+    def _hash(self: Any) -> int:
+        return hash((self._key, self._value))
+
+    if '__hash__' not in cls.__dict__:
+        cls.__hash__ = _hash
 
 
 def _installOneConstructor(cls: Any, case: Enum) -> None:

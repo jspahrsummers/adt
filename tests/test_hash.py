@@ -2,9 +2,11 @@ import unittest
 
 from adt import Case, adt
 
+
 @adt
 class Expression:
     LITERAL: Case[float]
+
 
 class TestHash(unittest.TestCase):
     def test_hash_correct(self) -> None:

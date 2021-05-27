@@ -137,16 +137,23 @@ def _installMatch(cls: Any, cases: Type[Enum]) -> None:
         caseNames = _cases.__members__.keys()
         upperKeys = {k: k.upper() for k in kwargs.keys()}
 
+        unmatched = set(caseNames) - set(upperKeys.values())
+        if "_" in upperKeys.values():
+            for key in unmatched:
+                kwargs[key] = kwargs["_"]
+                upperKeys[key] = key
+            del upperKeys["_"]
+            del kwargs["_"]
+        elif unmatched:
+            raise ValueError(
+                f"Incomplete pattern match against {self} (missing {unmatched})"
+            )
+
         for key in upperKeys.values():
             if key not in caseNames:
                 raise ValueError(
                     f'Unrecognized case {key} in pattern match against {self} (expected one of {caseNames})'
                 )
-
-        for key in caseNames:
-            if key not in upperKeys.values():
-                raise ValueError(
-                    f'Incomplete pattern match against {self} (missing {key})')
 
         for key, callback in kwargs.items():
             upperKey = upperKeys[key]

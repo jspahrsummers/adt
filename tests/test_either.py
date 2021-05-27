@@ -89,3 +89,24 @@ class TestEither(unittest.TestCase):
             self.assertEqual(
                 e.left(),
                 e.match(left=lambda x: x, right=helpers.invalidPatternMatch))
+
+    @given(from_type(Either))
+    def test_matching_with_default_key(self, e: Either[_L, _R]) -> None:
+        if e.match(left=lambda _: True, right=lambda _: False):
+            self.assertEqual(
+                e.left(),
+                e.match(right=helpers.invalidPatternMatch, _=lambda x: x))
+            self.assertEqual(
+                e.left(),
+                e.match(_=helpers.invalidPatternMatch, left=lambda x: x))
+        else:
+            self.assertEqual(
+                e.right(),
+                e.match(_=helpers.invalidPatternMatch, right=lambda x: x))
+
+            self.assertEqual(
+                e.right(),
+                e.match(left=helpers.invalidPatternMatch, _=lambda x: x))
+
+        with self.assertRaises(ValueError):
+            e.match(foobar=lambda x: x, _=lambda x: x)  # type: ignore
